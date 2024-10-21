@@ -134,9 +134,9 @@ const ChatBot: React.FC = () => {
   ), [messages]);
 
   return (
-<div className="flex flex-col h-screen w-4/5 max-w-3xl mx-auto max-h-[90vh] border rounded-lg overflow-hidden">
+<div className="flex flex-col h-screen w-4/5 max-w-3xl mx-auto max-h-[90vh] rounded-lg overflow-hidden">
       <Card className="flex flex-col h-full">
-        <CardHeader className="flex-shrink-0 border-b">
+        <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
             <CardTitle>AI Chatbot {currentAgent && `(${currentAgent})`}</CardTitle>
             <Button variant="outline" size="icon" onClick={clearChat} aria-label="Clear chat history">
