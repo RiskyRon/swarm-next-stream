@@ -37,6 +37,7 @@ const ChatBot: React.FC = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
+
   const connectWebSocket = useCallback(() => {
     const socket = new WebSocket('ws://localhost:8000/ws');
     setWs(socket);
@@ -133,65 +134,70 @@ const ChatBot: React.FC = () => {
   ), [messages]);
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>AI Chatbot {currentAgent && `(${currentAgent})`}</CardTitle>
-        <Button variant="outline" size="icon" onClick={clearChat} aria-label="Clear chat history">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4" ref={scrollAreaRef}>
-          {messageElements}
-          {isLoading && (
-            <div className="flex justify-start mb-4">
-              <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Thinking...
+<div className="flex flex-col h-screen w-4/5 max-w-3xl mx-auto max-h-[90vh] border rounded-lg overflow-hidden">
+      <Card className="flex flex-col h-full">
+        <CardHeader className="flex-shrink-0 border-b">
+          <div className="flex justify-between items-center">
+            <CardTitle>AI Chatbot {currentAgent && `(${currentAgent})`}</CardTitle>
+            <Button variant="outline" size="icon" onClick={clearChat} aria-label="Clear chat history">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-grow overflow-hidden p-0">
+          <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
+            {messageElements}
+            {isLoading && (
+              <div className="flex justify-start mb-4">
+                <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Thinking...
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+        <CardFooter className="flex-shrink-0 border-t p-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="w-full">
+            <div className="relative w-full">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className="pr-24 resize-none border rounded-md w-full"
+                rows={3}
+                maxLength={500}
+                aria-label="Chat input"
+              />
+              <div className="absolute bottom-2 right-2 flex space-x-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleUpload}
+                  disabled={isLoading || !isConnected}
+                >
+                  <Paperclip className="h-4 w-4" />
+                  <span className="sr-only">Attach file</span>
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8"
+                  disabled={isLoading || !isConnected}
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Send message</span>
+                </Button>
               </div>
             </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-      <CardFooter>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="w-full">
-          <div className="relative w-full">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className="pr-24 min-h-[100px] resize-none border rounded-md w-full"
-              maxLength={500}
-              aria-label="Chat input"
-            />
-            <div className="absolute bottom-2 right-2 flex space-x-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleUpload}
-                disabled={isLoading || !isConnected}
-              >
-                <Paperclip className="h-4 w-4" />
-                <span className="sr-only">Attach file</span>
-              </Button>
-              <Button 
-                type="submit" 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                disabled={isLoading || !isConnected}
-              >
-                <Send className="h-4 w-4" />
-                <span className="sr-only">Send message</span>
-              </Button>
-            </div>
-          </div>
-        </form>
-      </CardFooter>
-    </Card>
+          </form>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 
