@@ -6,6 +6,10 @@ from typing import List, Dict, Any
 import json
 import asyncio
 from swarm import Swarm, Agent # type: ignore
+import nest_asyncio # type: ignore
+
+# Apply nest_asyncio
+nest_asyncio.apply()
 
 from tools import *
 from instructions import *
@@ -38,7 +42,14 @@ triage_agent = Agent(
 web_agent = Agent(
     name="Web Agent",
     instructions=web_instructions,
-    functions=[tavily_search, get_video_transcript, get_website_text_content, save_to_md, get_all_urls],
+    functions=[
+        tavily_search, 
+        get_video_transcript, 
+        get_website_text_content, 
+        save_to_md, 
+        get_all_urls, 
+        generate_research_report
+    ],
     model=MODEL,
 )
 
@@ -83,7 +94,7 @@ async def websocket_endpoint(websocket: WebSocket):
             messages = [{"role": msg["role"], "content": msg["content"]} for msg in history]
             messages.append({"role": "user", "content": message})
 
-            async def stream_response():
+            async def process_stream():
                 stream = client.run(agent=agent, messages=messages, stream=True, debug=True)
                 current_agent_name = None
                 for chunk in stream:
@@ -93,9 +104,10 @@ async def websocket_endpoint(websocket: WebSocket):
                             await websocket.send_json({"type": "agent_change", "agent": current_agent_name})
                         if 'content' in chunk and chunk['content'] is not None:
                             await websocket.send_json({"type": "content", "content": chunk['content']})
-                    await asyncio.sleep(0)  # Allow other tasks to run
+                    await asyncio.sleep(0)
 
-            await stream_response()
+            # Create a new task for processing the stream
+            await asyncio.create_task(process_stream())
 
             response = client.run(agent=agent, messages=messages)
             agent = response.agent
