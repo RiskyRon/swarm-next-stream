@@ -38,7 +38,7 @@ interface Message {
 
 const ChatMessage: React.FC<{ message: Message }> = React.memo(({ message }) => (
   <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-    <div className={`rounded-lg p-3 max-w-[70%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+    <div className={`rounded-lg p-3 max-w-[90%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
       <ReactMarkdown
         className="prose prose-sm dark:prose-invert max-w-none [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0 [&_pre]:!border-0"
         components={{
