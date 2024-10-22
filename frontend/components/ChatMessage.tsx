@@ -4,9 +4,13 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Message } from '@/lib/hooks/useWebSocket';
 
-// Custom styles for code blocks
+// Separate direct styles
 const customCodeStyle = {
   ...vscDarkPlus,
+};
+
+// Separate nested styles
+const customWrapperStyle = {
   'pre[class*="language-"]': {
     ...vscDarkPlus['pre[class*="language-"]'],
     padding: '1rem',
@@ -45,7 +49,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) 
         <ReactMarkdown
           className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
           components={{
-            code({ node, inline, className, children, ...props }) {
+            code({ inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');
               return !inline && match ? (
                 <div className="relative rounded-md overflow-hidden my-4">
@@ -53,6 +57,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) 
                     style={customCodeStyle}
                     language={match[1]}
                     PreTag="div"
+                    wrapperStyle={customWrapperStyle}
                     customStyle={{
                       margin: 0,
                       background: 'hsl(var(--secondary))',

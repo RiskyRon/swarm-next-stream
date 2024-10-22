@@ -59,7 +59,7 @@ const ChatBot: React.FC = () => {
   ), [messages]);
 
   return (
-    <div className="flex flex-col h-screen w-4/5 max-w-3xl mx-auto max-h-[90vh] rounded-lg overflow-hidden">
+    <div className="flex flex-col h-screen w-4/5 max-w-[55rem] mx-auto max-h-[90vh] rounded-lg overflow-hidden">
       <Card className="flex flex-col h-full">
         <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
@@ -79,7 +79,6 @@ const ChatBot: React.FC = () => {
               <div className="flex justify-start mb-4">
                 <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Thinking...
                 </div>
               </div>
             )}
