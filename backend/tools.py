@@ -162,4 +162,53 @@ def get_all_urls(base_url):
     return connected_urls
 
 
+def read_file(file_path):
+    """
+    Read the contents of various file types.
+
+    Supported file types: md, txt, pdf, mdx, py, ts, tsx, js, jsx, css, scss, html
+
+    Args:
+        file_path (str): The path to the file to be read.
+
+    Returns:
+        str: The contents of the file.
+
+    Raises:
+        ValueError: If the file type is not supported.
+        IOError: If there's an issue reading the file.
+    """
+    import os
+    import PyPDF2
+
+    logging.info(f"Reading file: {file_path}")
+    
+    file_extension = os.path.splitext(file_path)[1].lower()
+    
+    supported_extensions = ['.md', '.txt', '.pdf', '.mdx', '.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.html']
+    
+    if file_extension not in supported_extensions:
+        raise ValueError(f"Unsupported file type: {file_extension}")
+    
+    try:
+        if file_extension == '.pdf':
+            with open(file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                content = ""
+                for page in pdf_reader.pages:
+                    content += page.extract_text()
+        else:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+        
+        logging.info(f"File {file_path} read successfully")
+        return content
+    
+    except IOError as e:
+        logging.error(f"Error reading file {file_path}: {str(e)}")
+        raise
+
+
+
+
 

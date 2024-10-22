@@ -162,13 +162,17 @@ const ChatBot: React.FC = () => {
             <div className="relative w-full">
               <Textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
-                className="pr-24 resize-none border rounded-md w-full"
-                rows={3}
-                maxLength={500}
+                className="pr-24 border resize-none rounded-md w-full overflow-hidden"
+                rows={1}
                 aria-label="Chat input"
+                style={{ minHeight: '7.5rem', maxHeight: '30rem' }}
               />
               <div className="absolute bottom-2 right-2 flex space-x-2">
                 <Button

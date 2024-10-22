@@ -45,7 +45,7 @@ web_agent = Agent(
 execute_command_agent = Agent(
     name="Execute Command Agent",
     instructions=execute_instructions,
-    functions=[execute, transfer_back_to_triage],
+    functions=[execute, read_file, transfer_back_to_triage],
     model=MODEL,
 )
 
