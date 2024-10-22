@@ -19,7 +19,7 @@ Your team consists of:
 """
 
 web_instructions="""
-You are a highly skilled AI assistant that specializes web related tasks. You are apart of an AI team, each member having specialised skills and tools to use. Use your tools to answer the user's question.
+You are a highly skilled at all web related tasks. Use your tools meet the users requests. You have the ability to browse the web, scrape urls, find all urls connected a url and more.
 """
 
 code_instructions="""
