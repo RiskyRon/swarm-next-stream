@@ -1,4 +1,3 @@
-// frontend/components/ChatMessage.tsx
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -30,48 +29,62 @@ interface ChatMessageProps {
 
 export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => (
   <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-    <div className={`rounded-lg p-3 max-w-[90%] ${
-      message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-    }`}>
-      <ReactMarkdown
-        className="prose prose-sm dark:prose-invert max-w-none [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0 [&_pre]:!border-0"
-        components={{
-          code({ node, inline, className, children, ...props }: {
-            node?: any;
-            inline?: boolean;
-            className?: string;
-            children: React.ReactNode;
-          }) {
-            const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <div className="relative rounded-md overflow-hidden">
-                <SyntaxHighlighter
-                  style={customCodeStyle}
-                  language={match[1]}
-                  PreTag="div"
-                  customStyle={{
-                    margin: 0,
-                    background: 'hsl(var(--secondary))',
-                  }}
-                  className="scrollbar-custom"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              </div>
-            ) : (
-              <code className="bg-secondary px-1.5 py-0.5 rounded-md text-sm" {...props}>
-                {children}
-              </code>
-            );
-          },
-        }}
-      >
-        {message.content}
-      </ReactMarkdown>
-      <p className="text-xs mt-1 opacity-50">
-        {message.timestamp.toLocaleTimeString()}
-      </p>
+    <div className={`flex items-start pt-5 gap-2 max-w-[100%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className="flex-shrink-0">
+        <img
+          src={message.role === 'user' ? '/images/user-avatar.png' : '/images/bot-avatar.png'}
+          alt={`${message.role} avatar`}
+          className="w-10 h-10 rounded-full"
+        />
+      </div>
+      <div className={`rounded-lg p-3 ${
+        message.role === 'user' 
+          ? 'bg-secondary text-secondary-foreground border' 
+          : 'bg-secondary text-secondary-foreground'
+      }`}>
+        <ReactMarkdown
+          className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              return !inline && match ? (
+                <div className="relative rounded-md overflow-hidden my-4">
+                  <SyntaxHighlighter
+                    style={customCodeStyle}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      background: 'hsl(var(--secondary))',
+                    }}
+                    className="scrollbar-custom p-4"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                </div>
+              ) : (
+                <code className="bg-secondary px-1.5 py-0.5 rounded-md text-sm" {...props}>
+                  {children}
+                </code>
+              );
+            },
+            p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+            ul: ({ children }) => <ul className="list-disc pl-6 mb-4 last:mb-0">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 last:mb-0">{children}</ol>,
+            li: ({ children }) => <li className="mb-2 last:mb-0">{children}</li>,
+            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-lg font-bold mb-2 mt-4">{children}</h3>,
+            blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+          }}
+        >
+          {message.content}
+        </ReactMarkdown>
+        <p className="text-xs mt-2 opacity-50">
+          {message.timestamp.toLocaleTimeString()}
+        </p>
+      </div>
     </div>
   </div>
 ));

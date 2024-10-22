@@ -86,7 +86,7 @@ const ChatBot: React.FC = () => {
             <div ref={messageEndRef} />
           </ScrollArea>
         </CardContent>
-        <CardFooter className="flex-shrink-0 p-4">
+        <CardFooter className="flex-shrink-0 p-2">
           <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="w-full">
             <div className="relative w-full">
               <Textarea
