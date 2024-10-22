@@ -29,4 +29,9 @@ pip install -r requirements.txt
 
 ```
 python main.py
+
+```
+
+```
+tree -I 'venv|node_modules|.git|.next|__pycache__'
 ```
