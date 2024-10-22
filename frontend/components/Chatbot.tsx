@@ -35,8 +35,18 @@ const ChatBot: React.FC = () => {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messageEndRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
+  const scrollToBottom = useCallback(() => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading, scrollToBottom]);
 
   const connectWebSocket = useCallback(() => {
     const socket = new WebSocket('ws://localhost:8000/ws');
@@ -94,12 +104,6 @@ const ChatBot: React.FC = () => {
     };
   }, [connectWebSocket]);
 
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
-
   const handleSubmit = useCallback(() => {
     if (!input.trim() || !ws || !isConnected) return;
 
@@ -134,7 +138,7 @@ const ChatBot: React.FC = () => {
   ), [messages]);
 
   return (
-<div className="flex flex-col h-screen w-4/5 max-w-3xl mx-auto max-h-[90vh] rounded-lg overflow-hidden">
+    <div className="flex flex-col h-screen w-4/5 max-w-3xl mx-auto max-h-[90vh] rounded-lg overflow-hidden">
       <Card className="flex flex-col h-full">
         <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
@@ -155,6 +159,7 @@ const ChatBot: React.FC = () => {
                 </div>
               </div>
             )}
+            <div ref={messageEndRef} /> {/* Added scroll anchor */}
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex-shrink-0 border-t p-4">
