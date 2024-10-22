@@ -24,14 +24,14 @@ def transfer_to_web_agent():
    """Call this function to transfer to the web_agent."""
    return web_agent
 
-def transfer_to_execute_command_agent():
+def transfer_to_code_agent():
    """Call this function to transfer to the execute_command_agent"""
-   return execute_command_agent
+   return code_agent
 
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_execute_command_agent, transfer_to_web_agent],
+    functions=[transfer_to_code_agent, transfer_to_web_agent],
     model=MODEL,
 )
 
@@ -42,17 +42,17 @@ web_agent = Agent(
     model=MODEL,
 )
 
-execute_command_agent = Agent(
-    name="Execute Command Agent",
-    instructions=execute_instructions,
-    functions=[execute, read_file, transfer_back_to_triage],
+code_agent = Agent(
+    name="Code Agent",
+    instructions=code_instructions,
+    functions=[execute_command, read_file, install_package, run_python_script, transfer_back_to_triage],
     model=MODEL,
 )
 
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_execute_command_agent, transfer_to_web_agent])
+triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent])
 web_agent.functions.extend([transfer_back_to_triage])
-execute_command_agent.functions.extend([transfer_back_to_triage])
+code_agent.functions.extend([transfer_back_to_triage])
 
 class Message(BaseModel):
     role: str

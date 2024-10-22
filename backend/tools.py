@@ -1,6 +1,8 @@
 #tools.py
 import os
 import json
+import sys
+import venv
 import subprocess
 import trafilatura # type: ignore
 import logging
@@ -31,29 +33,6 @@ def tavily_search(query: str) -> str:
         return search_result
     except Exception as e:
         error_message = f"Error performing Tavily search: {str(e)}"
-        logging.error(error_message)
-        return error_message
-
-def execute(command):
-    """
-    Execute a shell command and return its output.
-
-    This function runs a given shell command using subprocess and returns the command's
-    standard output. If the command fails, it returns the error message. This function has many uses. For example, performing CRUD operations, running a script, or executing a system command, using webget or curl to download a file, ect.
-
-    Args:
-        command (str): The shell command to execute.
-
-    Returns:
-        str: The command's standard output if successful, or an error message if the command fails.
-    """
-    logging.info(f"Executing command: {command}")
-    try:
-        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        logging.info("Command executed successfully")
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        error_message = f"Command failed with error: {e.stderr.strip()}"
         logging.error(error_message)
         return error_message
 
@@ -161,6 +140,30 @@ def get_all_urls(base_url):
 
     return connected_urls
 
+# Code Agent tools
+
+def execute_command(command):
+    """
+    Execute a shell command and return its output.
+
+    This function runs a given shell command using subprocess and returns the command's
+    standard output. If the command fails, it returns the error message. This function has many uses. For example, performing CRUD operations, running a script, or executing a system command, using webget or curl to download a file, ect.
+
+    Args:
+        command (str): The shell command to execute.
+
+    Returns:
+        str: The command's standard output if successful, or an error message if the command fails.
+    """
+    logging.info(f"Executing command: {command}")
+    try:
+        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        logging.info("Command executed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Command failed with error: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
 
 def read_file(file_path):
     """
@@ -208,7 +211,68 @@ def read_file(file_path):
         logging.error(f"Error reading file {file_path}: {str(e)}")
         raise
 
+def install_package(package_name):
+    """
+    Install a Python package in the /venv virtual environment.
 
+    Args:
+        package_name (str): The name of the package to install.
 
+    Returns:
+        str: The output of the installation command or an error message.
+    """
+    logging.info(f"Installing package: {package_name}")
+    venv_path = "venv"
+    pip_path = f"{venv_path}/bin/pip"
+    
+    if not os.path.exists(pip_path):
+        error_message = f"Virtual environment not found at {venv_path}"
+        logging.error(error_message)
+        return error_message
+    
+    try:
+        result = subprocess.run([pip_path, "install", package_name], 
+                                check=True, 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)
+        logging.info(f"Package {package_name} installed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to install package {package_name}: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+
+def run_python_script(filename):
+    """
+    Run a Python script using the Python interpreter from the /venv virtual environment.
+
+    Args:
+        filename (str): The name of the Python script to run.
+
+    Returns:
+        str: The output of the script or an error message.
+    """
+    logging.info(f"Running Python script: {filename}")
+    venv_path = "/venv"
+    python_path = f"{venv_path}/bin/python"
+    
+    if not os.path.exists(python_path):
+        error_message = f"Virtual environment not found at {venv_path}"
+        logging.error(error_message)
+        return error_message
+    
+    try:
+        result = subprocess.run([python_path, filename], 
+                                check=True, 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)
+        logging.info(f"Script {filename} executed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to run script {filename}: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
 
 
