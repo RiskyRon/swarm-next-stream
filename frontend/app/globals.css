@@ -10,7 +10,36 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+    border-radius: 4px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.8);
+  }
+
+  /* Horizontal scrollbar specific styles */
+  .scrollbar-custom::-webkit-scrollbar-thumb:horizontal {
+    border-radius: 4px;
+  }
 }
+
 
 @layer base {
   :root {
