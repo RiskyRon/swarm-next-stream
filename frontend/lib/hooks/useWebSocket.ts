@@ -97,8 +97,15 @@ export const useWebSocket = (url: string): WebSocketHookReturn => {
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setIsLoading(true);
 
-    ws.send(content);
-  }, [ws, isConnected]);
+    // Get the last 4 interactions (8 messages, as each interaction has a user and assistant message)
+    const lastMessages = messages.slice(-8).concat(userMessage);
+
+    // Send the last 4 interactions along with the new message
+    ws.send(JSON.stringify({
+      message: content,
+      history: lastMessages
+    }));
+  }, [ws, isConnected, messages]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

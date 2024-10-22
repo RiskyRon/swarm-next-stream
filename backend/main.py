@@ -71,13 +71,17 @@ async def chat(request: ConversationRequest):
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    messages = []
     agent = triage_agent
 
     try:
         while True:
-            data = await websocket.receive_text()
-            messages.append({"role": "user", "content": data})
+            data = await websocket.receive_json()
+            message = data['message']
+            history = data.get('history', [])
+
+            # Convert history to the format expected by the Swarm client
+            messages = [{"role": msg["role"], "content": msg["content"]} for msg in history]
+            messages.append({"role": "user", "content": message})
 
             async def stream_response():
                 stream = client.run(agent=agent, messages=messages, stream=True, debug=True)
@@ -94,7 +98,6 @@ async def websocket_endpoint(websocket: WebSocket):
             await stream_response()
 
             response = client.run(agent=agent, messages=messages)
-            messages = response.messages
             agent = response.agent
 
             await websocket.send_json({"type": "end", "agent": agent.name})
