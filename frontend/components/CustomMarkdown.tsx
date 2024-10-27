@@ -13,12 +13,7 @@ export const CustomMarkdown: React.FC<CustomMarkdownProps> = ({ content }) => (
   <ReactMarkdown
     className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
     components={{
-      code({ node, inline, className, children, ...props }: {
-        node?: any;
-        inline?: boolean;
-        className?: string;
-        children: React.ReactNode;
-      }) {
+      code({ node, inline, className, children, ...props }: any) {
         const match = /language-(\w+)/.exec(className || '');
         if (match && match[1] === 'weather') {
           try {
