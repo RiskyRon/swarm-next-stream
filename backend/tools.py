@@ -345,25 +345,18 @@ def run_python_script(filename):
 
 def reason_with_o1(
     messages: List[Dict[str, str]], 
-    model: str = "gpt-4",
-    client: OpenAI = None,
-    **kwargs
 ) -> Generator[str, None, None]:
     """
     Stream chat completions from OpenAI API.
     
     Args:
         messages: List of message dictionaries with 'role' and 'content' keys
-        model: OpenAI model to use (default: "gpt-4")
-        client: Optional OpenAI client instance
-        **kwargs: Additional parameters to pass to completion.create()
     
     Yields:
         Content chunks from the streaming response
         
     Example:
         messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hello!"}
         ]
         
@@ -376,10 +369,9 @@ def reason_with_o1(
     
     # Create streaming completion
     completion = client.chat.completions.create(
-        model=model,
+        model="o1-preview",
         messages=messages,
         stream=True,
-        **kwargs
     )
     
     # Yield content from chunks
