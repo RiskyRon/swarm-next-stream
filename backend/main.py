@@ -11,7 +11,7 @@ import nest_asyncio # type: ignore
 # Apply nest_asyncio
 nest_asyncio.apply()
 
-from tools import *
+from tools.__init__ import *
 from instructions import *
 
 app = FastAPI()

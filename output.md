@@ -520,9 +520,9 @@ You are a highly skilled AI assistant specializing in triage. As a member of an 
    - **Use Cases:** Answering questions about current events, facts, general knowledge, web scraping, and research.
 
 4. **reasoning_agent:**
-   - **Expertise:** Advanced reasoning and problem-solving using OpenAI's latest and most advanced model, .
+   - **Expertise:** Advanced reasoning and problem-solving using OpenAI's latest and most advanced model, o1-preview.
    - **Capabilities:**
-     - **reason_with_o1:** Utilizes OpenAI's GPT-4 model for complex reasoning tasks.
+     - **reason_with_o1:** Utilizes OpenAI's new o1-preview model for complex reasoning tasks.
    - **Use Cases:** Solving complex problems, providing detailed explanations, and handling tasks that require advanced cognitive abilities.
 
 **Your Task:**
@@ -576,26 +576,16 @@ You are the code_agent, a highly skilled AI assistant specializing in executing 
 """
 
 reasoning_instructions="""
-You are the reasoning_agent, a highly advanced AI assistant specializing in complex problem-solving and detailed reasoning. Your primary tool is the GPT-4 model, which you use to tackle challenging questions and provide in-depth explanations.
+You are the reasoning_agent, a highly advanced AI assistant specializing in complex problem-solving and detailed reasoning. Your primary tool is the o1-preview model, which you use to tackle challenging questions and provide in-depth explanations.
 
 The o1 series of large language models are trained with reinforcement learning to perform complex reasoning. o1 models think before they answer, producing a long internal chain of thought before responding to the user.
 Learn about the capabilities and limitations of o1 models in our reasoning guide.
-
-There are two model types available today:
-
-o1-preview: reasoning model designed to solve hard problems across domains.
-o1-mini: faster and cheaper reasoning model particularly good at coding, math, and science.
-
-**Capabilities:**
-- **Advanced Reasoning:** Utilize the o1-preview model to analyze complex problems and generate thoughtful solutions.
-- **Detailed Explanations:** Provide comprehensive and clear explanations for complex topics.
-- **Problem-Solving:** Break down intricate issues into manageable components and address each systematically.
 
 **Available Tools:**
 - **reason_with_o1:** Access the o1-preview model to perform advanced reasoning tasks.
 
 **Your Role:**
-- Analyze the user's complex queries or problems that require deep thinking.
+- Call the `reason_with_o1` function to generate well-reasoned responses.
 - Use the o1-preview model through the `reason_with_o1` function to generate well-reasoned responses.
 - Provide clear, detailed, and logically structured explanations or solutions.
 - Handle tasks that require advanced cognitive abilities, such as:
@@ -957,25 +947,18 @@ def run_python_script(filename):
 
 def reason_with_o1(
     messages: List[Dict[str, str]], 
-    model: str = "gpt-4",
-    client: OpenAI = None,
-    **kwargs
 ) -> Generator[str, None, None]:
     """
     Stream chat completions from OpenAI API.
     
     Args:
         messages: List of message dictionaries with 'role' and 'content' keys
-        model: OpenAI model to use (default: "gpt-4")
-        client: Optional OpenAI client instance
-        **kwargs: Additional parameters to pass to completion.create()
     
     Yields:
         Content chunks from the streaming response
         
     Example:
         messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hello!"}
         ]
         
@@ -988,10 +971,9 @@ def reason_with_o1(
     
     # Create streaming completion
     completion = client.chat.completions.create(
-        model=model,
+        model="o1-preview",
         messages=messages,
         stream=True,
-        **kwargs
     )
     
     # Yield content from chunks
