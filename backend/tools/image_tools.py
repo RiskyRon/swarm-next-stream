@@ -1,6 +1,7 @@
 import base64
 import os
 import requests
+import logging
 from pathlib import Path
 from typing import Union, List, Dict, Optional, Literal
 import mimetypes
@@ -8,12 +9,14 @@ from openai import OpenAI
 from urllib.parse import urlparse
 from typing import Union, List, Dict, Optional, Literal
 
+client = OpenAI()
+
 def analyze_image(
     image_source: Union[str, List[str]],
     prompt: str = "What's in this image?",
     detail: Literal["auto", "low", "high"] = "auto",
     model: str = "gpt-4o",
-    max_tokens: int = 300
+    max_tokens: int = 1000
 ) -> Dict[str, Union[str, Dict[str, int]]]:
     """
     Analyze one or more images using OpenAI's Vision API.
@@ -26,7 +29,7 @@ class ImageAnalyzer:
     A class for analyzing images using OpenAI's Vision API.
 
     This class provides methods to analyze both local and remote images using
-    OpenAI's GPT-4 Vision model. It supports multiple image formats and can
+    OpenAI's GPT-4o model, capable of image analysis. It supports multiple image formats and can
     handle both single and multiple image analysis.
 
     Attributes:
@@ -230,3 +233,51 @@ class ImageAnalyzer:
                     os.remove(temp_file)
                 except:
                     pass
+
+def generate_image(
+    prompt: str,
+    size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024",
+    quality: Literal["standard", "hd"] = "hd",
+    style: Literal["vivid", "natural"] = "vivid",
+    model: str = "dall-e-3",
+    n: int = 1,
+    response_format: Literal["url", "b64_json"] = "url"
+) -> dict:
+    """
+    Generate an image using DALL-E 3.
+    
+    Args:
+        prompt (str): Text description of the desired image(s). Max 4000 characters.
+        size (str): Image size - "1024x1024", "1792x1024", or "1024x1792". Defaults to "1024x1024".
+        quality (str): Image quality - "standard" or "hd". Defaults to "hd".
+        style (str): Image style - "vivid" or "natural". Defaults to "vivid".
+        model (str): Model to use. Defaults to "dall-e-3".
+        n (int): Number of images to generate. DALL-E 3 only supports n=1.
+        response_format (str): Format for generated images - "url" or "b64_json". Defaults to "url".
+    
+    Returns:
+        dict: Response from the OpenAI API containing image data
+        
+    Raises:
+        Exception: If the API call fails
+    """
+    try:
+        logging.info(f"Generating image with prompt: {prompt}")
+        response = client.images.generate(
+            model=model,
+            prompt=prompt,
+            n=n,
+            size=size,
+            quality=quality,
+            style=style,
+            response_format=response_format
+        )
+        logging.info("Image generated successfully")
+        return {
+            "url": response.data[0].url,
+            "revised_prompt": getattr(response.data[0], 'revised_prompt', None)
+        }
+    except Exception as e:
+        error_message = f"Error generating image: {str(e)}"
+        logging.error(error_message)
+        return {"error": error_message}

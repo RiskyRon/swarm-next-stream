@@ -78,7 +78,7 @@ reasoning_agent = Agent(
 image_agent = Agent(
     name="Image Agent",
     instructions=image_instructions,
-    functions=[analyze_image, transfer_back_to_triage],
+    functions=[analyze_image, generate_image, transfer_back_to_triage],
     model=MODEL,
 )
 
