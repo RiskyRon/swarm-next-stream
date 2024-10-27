@@ -525,6 +525,12 @@ You are a highly skilled AI assistant specializing in triage. As a member of an 
      - **reason_with_o1:** Utilizes OpenAI's new o1-preview model for complex reasoning tasks.
    - **Use Cases:** Solving complex problems, providing detailed explanations, and handling tasks that require advanced cognitive abilities.
 
+5. **image_agent:**
+   - **Expertise:** Image analysis and processing using OpenAI's Vision API.
+   - **Capabilities:**
+     - **ImageAnalyzer:** Analyzes both local and remote images using OpenAI's GPT-4 Vision model.
+   - **Use Cases:** Describing image content, extracting text from images, identifying objects or scenes in images.
+
 **Your Task:**
 - Assess the user's request.
 - Determine which team member is best suited to handle the request.
@@ -595,6 +601,30 @@ Learn about the capabilities and limitations of o1 models in our reasoning guide
   - Offering nuanced perspectives on complex issues
 """
 
+image_instructions = """
+You are the image_agent, a highly skilled AI assistant specializing in image analysis tasks using OpenAI's Vision API.
+As part of an AI team, your role is to analyze and interpret images effectively using the ImageAnalyzer class.
+
+**Capabilities:**
+- Analyze both local images and images from URLs
+- Process multiple images simultaneously
+- Support for various image formats (PNG, JPG, JPEG, WebP)
+- Adjustable detail levels for analysis (low/high)
+- Token usage tracking
+
+**Available Tools:**
+- **analyze_image:** Analyzes one or more images using OpenAI's Vision API and returns detailed descriptions
+  - Can process both local files and URLs
+  - Supports multiple image formats
+  - Configurable detail level and response length
+
+**Your Role:**
+- Interpret user requests related to image analysis
+- Choose appropriate detail levels based on the task requirements
+- Provide clear, descriptive analysis of image content
+- Handle both single and multiple image analysis requests
+- Manage error cases gracefully (unsupported formats, invalid URLs, etc.)
+"""
 ```
 
 ## backend/tools.py
@@ -1030,7 +1060,7 @@ import nest_asyncio # type: ignore
 # Apply nest_asyncio
 nest_asyncio.apply()
 
-from tools import *
+from tools.__init__ import *
 from instructions import *
 
 app = FastAPI()
@@ -1055,10 +1085,14 @@ def transfer_to_reasoning_agent():
     """Call this function to transfer to the reasoning_agent"""
     return reasoning_agent
 
+def transfer_to_image_agent():
+    """Call this function to transfer to the image_agent"""
+    return image_agent
+
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent],
+    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent],
     model=MODEL,
 )
 
@@ -1090,11 +1124,20 @@ reasoning_agent = Agent(
     model=MODEL,
 )
 
+image_agent = Agent(
+    name="Image Agent",
+    instructions=image_instructions,
+    functions=[analyze_image, transfer_back_to_triage],
+    model=MODEL,
+)
+
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent])
+triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
+image_agent.functions.extend([transfer_back_to_triage])
+
 class Message(BaseModel):
     role: str
     content: str
@@ -1150,5 +1193,706 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     import uvicorn # type: ignore
     uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+## backend/tools/web_tools.py
+
+```typescript
+import trafilatura # type: ignore
+import os
+import logging
+from bs4 import BeautifulSoup # type: ignore
+from tavily import TavilyClient # type: ignore
+from urllib.parse import urljoin, urlparse
+from youtube_transcript_api import YouTubeTranscriptApi # type: ignore
+from gpt_researcher import GPTResearcher # type: ignore
+import asyncio
+import nest_asyncio  # type: ignore # Add this import
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
+
+tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+
+def tavily_search(query: str) -> str:
+    """
+    Perform a search using the Tavily API.
+
+    This function takes a search query and uses the Tavily client to perform a basic search.
+    It returns the search context limited to a maximum of 8000 tokens.
+
+    Args:
+        query (str): The search query string.
+
+    Returns:
+        str: The search result context or an error message if the search fails.
+    """
+    logging.info(f"Performing Tavily search with query: {query}")
+    try:
+        search_result = tavily_client.get_search_context(query, search_depth="basic", max_tokens=8000)
+        logging.info("Tavily search completed successfully")
+        return search_result
+    except Exception as e:
+        error_message = f"Error performing Tavily search: {str(e)}"
+        logging.error(error_message)
+        return error_message
+
+
+
+async def fetch_report(query):
+    """
+    Fetch a research report based on the provided query and report type.
+    """
+    researcher = GPTResearcher(query=query)
+    await researcher.conduct_research()
+    report = await researcher.write_report()
+    return report
+
+def run_async(coroutine):
+    """Helper function to run async functions in a sync context."""
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)
+
+def generate_research_report(query: str) -> str:
+    """
+    Synchronous function to generate a research report.
+    Uses the current event loop if one exists, or creates a new one if needed.
+    """
+    async def _async_research():
+        try:
+            researcher = GPTResearcher(query=query)
+            await researcher.conduct_research()
+            return await researcher.write_report()
+        except Exception as e:
+            logging.error(f"Error in _async_research: {str(e)}")
+            return f"Error conducting research: {str(e)}"
+
+    try:
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+        # Create a new task in the current loop
+        return loop.run_until_complete(_async_research())
+    except RuntimeError:
+        # If no event loop is running, create a new one
+        return asyncio.run(_async_research())
+    except Exception as e:
+        logging.error(f"Error in generate_research_report: {str(e)}")
+        return f"Error generating research report: {str(e)}"
+
+def get_video_transcript(video_id):
+    """
+    Retrieve the transcript of a YouTube video.
+
+    This function takes a YouTube video ID and attempts to fetch its transcript
+    using the YouTubeTranscriptApi.
+
+    Args:
+        video_id (str): The ID of the YouTube video.
+
+    Returns:
+        list or str: A list containing the transcript data if successful,
+                     or an error message string if the retrieval fails.
+    """
+    logging.info(f"Fetching transcript for video ID: {video_id}")
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        logging.info("Video transcript fetched successfully")
+        return transcript
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}"
+        logging.error(error_message)
+        return error_message
+    
+def get_website_text_content(url: str) -> str:
+    """
+    Fetches and extracts the main text content from a given URL.
+
+    Args:
+        url (str): The URL of the website to fetch content from.
+
+    Returns:
+        str: The extracted text content from the website.
+
+    Raises:
+        Any exceptions raised by trafilatura.fetch_url or trafilatura.extract.
+    """
+    logging.info(f"Fetching content from URL: {url}")
+    downloaded = trafilatura.fetch_url(url)
+    text = trafilatura.extract(downloaded)
+    logging.info("Website content extracted successfully")
+    return text
+
+def save_to_md(text: str, filename: str) -> None:
+    """
+    Saves the given text content to a markdown file.
+
+    Args:
+        text (str): The text content to be saved.
+        filename (str): The name of the file to save the content to.
+
+    Returns:
+        None
+
+    Raises:
+        IOError: If there's an issue writing to the file.
+    """
+    logging.info(f"Saving content to file: {filename}")
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(text)
+        logging.info(f"Content saved successfully to {filename}")
+    except IOError as e:
+        logging.error(f"Error saving content to file: {str(e)}")
+
+def get_all_urls(base_url):
+    """
+    Process a given URL to find all connected URLs within the same domain.
+
+    This function downloads the content of the base_url, extracts all links,
+    filters for links within the same domain and removes duplicates.
+
+    Args:
+        base_url (str): The URL to process.
+
+    Returns:
+        list: A list of unique URLs connected to the base_url within the same domain.
+
+    Raises:
+        Exception: If there's an error during URL processing.
+    """
+    logging.info(f"Processing URL: {base_url}")
+    connected_urls = []
+    try:
+        downloaded = trafilatura.fetch_url(base_url)
+        if downloaded is None:
+            logging.warning(f"Failed to download {base_url}")
+            return []
+
+        soup = BeautifulSoup(downloaded, 'lxml')
+        
+        for link in soup.find_all('a', href=True):
+            url = urljoin(base_url, link['href'])
+            if urlparse(url).netloc == urlparse(base_url).netloc:
+                connected_urls.append(url)
+
+        # Remove duplicates
+        connected_urls = list(set(connected_urls))
+
+    except Exception as e:
+        logging.error(f"Error processing URL: {str(e)}")
+
+    return connected_urls
+```
+
+## backend/tools/research_tools.py
+
+```typescript
+import asyncio
+import logging
+from gpt_researcher import GPTResearcher # type: ignore
+import asyncio
+import nest_asyncio  # type: ignore # Add this import
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
+async def fetch_report(query):
+    """
+    Fetch a research report based on the provided query and report type.
+    """
+    researcher = GPTResearcher(query=query)
+    await researcher.conduct_research()
+    report = await researcher.write_report()
+    return report
+
+def run_async(coroutine):
+    """Helper function to run async functions in a sync context."""
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)
+
+def generate_research_report(query: str) -> str:
+    """
+    Synchronous function to generate a research report.
+    Uses the current event loop if one exists, or creates a new one if needed.
+    """
+    async def _async_research():
+        try:
+            researcher = GPTResearcher(query=query)
+            await researcher.conduct_research()
+            return await researcher.write_report()
+        except Exception as e:
+            logging.error(f"Error in _async_research: {str(e)}")
+            return f"Error conducting research: {str(e)}"
+
+    try:
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+        # Create a new task in the current loop
+        return loop.run_until_complete(_async_research())
+    except RuntimeError:
+        # If no event loop is running, create a new one
+        return asyncio.run(_async_research())
+    except Exception as e:
+        logging.error(f"Error in generate_research_report: {str(e)}")
+        return f"Error generating research report: {str(e)}"
+```
+
+## backend/tools/reasoning_tools.py
+
+```typescript
+from openai import OpenAI
+from typing import List, Dict, Generator
+
+client = OpenAI()
+
+def reason_with_o1(
+    messages: List[Dict[str, str]], 
+) -> Generator[str, None, None]:
+    """
+    Stream chat completions from OpenAI API.
+    
+    Args:
+        messages: List of message dictionaries with 'role' and 'content' keys
+    
+    Yields:
+        Content chunks from the streaming response
+        
+    Example:
+        messages = [
+            {"role": "user", "content": "Hello!"}
+        ]
+        
+        for chunk in stream_chat_completion(messages):
+            print(chunk, end='', flush=True)
+    """
+    # Create new client if none provided
+    if client is None:
+        client = OpenAI()
+    
+    # Create streaming completion
+    completion = client.chat.completions.create(
+        model="o1-preview",
+        messages=messages,
+        stream=True,
+    )
+    
+    # Yield content from chunks
+    for chunk in completion:
+        if chunk.choices[0].delta.content is not None:
+            yield chunk.choices[0].delta.content
+```
+
+## backend/tools/__init__.py
+
+```typescript
+from .web_tools import tavily_search, get_video_transcript, get_website_text_content, get_all_urls, save_to_md
+from .code_tools import execute_command, read_file, install_package, run_python_script
+from .research_tools import fetch_report, run_async, generate_research_report
+from .reasoning_tools import reason_with_o1
+from .image_tools import analyze_image
+
+```
+
+## backend/tools/code_tools.py
+
+```typescript
+import os
+import subprocess
+import logging
+import PyPDF2 # type: ignore
+
+def execute_command(command):
+    """
+    Execute a shell command and return its output.
+
+    This function runs a given shell command using subprocess and returns the command's
+    standard output. If the command fails, it returns the error message. This function has many uses. For example, performing CRUD operations, running a script, or executing a system command, using webget or curl to download a file, etc.
+
+    Args:
+        command (str): The shell command to execute.
+
+    Returns:
+        str: The command's standard output if successful, or an error message if the command fails.
+    """
+    logging.info(f"Executing command: {command}")
+    current_dir = os.getcwd()
+    workspace_dir = os.path.join(current_dir, 'WORKSPACE')
+    
+    try:
+        os.chdir(workspace_dir)
+        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        logging.info("Command executed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Command failed with error: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+    finally:
+        os.chdir(current_dir)
+
+def read_file(file_path):
+    """
+    Read the contents of various file types from the WORKSPACE directory.
+
+    Supported file types: md, txt, pdf, mdx, py, ts, tsx, js, jsx, css, scss, html
+    The function automatically looks for files in the WORKSPACE directory relative to the
+    current working directory.
+
+    Args:
+        file_path (str): The path to the file to be read, relative to WORKSPACE directory.
+
+    Returns:
+        str: The contents of the file.
+
+    Raises:
+        ValueError: If the file type is not supported.
+        IOError: If there's an issue reading the file.
+    """
+    logging.info(f"Reading file: {file_path}")
+    
+    # Get the current directory and construct the WORKSPACE path
+    current_dir = os.getcwd()
+    workspace_dir = os.path.join(current_dir, 'WORKSPACE')
+    
+    # Construct the full file path within WORKSPACE
+    full_file_path = os.path.join(workspace_dir, file_path)
+    
+    file_extension = os.path.splitext(full_file_path)[1].lower()
+    supported_extensions = ['.md', '.txt', '.pdf', '.mdx', '.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.html']
+    
+    if file_extension not in supported_extensions:
+        raise ValueError(f"Unsupported file type: {file_extension}")
+    
+    try:
+        if file_extension == '.pdf':
+            with open(full_file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                content = ""
+                for page in pdf_reader.pages:
+                    content += page.extract_text()
+        else:
+            with open(full_file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+        
+        logging.info(f"File {full_file_path} read successfully")
+        return content
+    
+    except IOError as e:
+        logging.error(f"Error reading file {full_file_path}: {str(e)}")
+        raise
+
+def install_package(package_name):
+    """
+    Install a Python package in the /venv virtual environment.
+
+    Args:
+        package_name (str): The name of the package to install.
+
+    Returns:
+        str: The output of the installation command or an error message.
+    """
+    logging.info(f"Installing package: {package_name}")
+    venv_path = "venv"
+    pip_path = f"{venv_path}/bin/pip"
+    
+    if not os.path.exists(pip_path):
+        error_message = f"Virtual environment not found at {venv_path}"
+        logging.error(error_message)
+        return error_message
+    
+    try:
+        result = subprocess.run([pip_path, "install", package_name], 
+                                check=True, 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)
+        logging.info(f"Package {package_name} installed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to install package {package_name}: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+
+def run_python_script(filename):
+    """
+    Run a Python script using the Python interpreter from the /venv virtual environment.
+
+    Args:
+        filename (str): The name of the Python script to run.
+
+    Returns:
+        str: The output of the script or an error message.
+    """
+    logging.info(f"Running Python script: {filename}")
+    venv_path = "/venv"
+    python_path = f"{venv_path}/bin/python"
+    
+    if not os.path.exists(python_path):
+        error_message = f"Virtual environment not found at {venv_path}"
+        logging.error(error_message)
+        return error_message
+    
+    try:
+        result = subprocess.run([python_path, filename], 
+                                check=True, 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)
+        logging.info(f"Script {filename} executed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to run script {filename}: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+```
+
+## backend/tools/file_tools.py
+
+```typescript
+
+```
+
+## backend/tools/image_tools.py
+
+```typescript
+import base64
+import os
+import requests
+from pathlib import Path
+from typing import Union, List, Dict, Optional, Literal
+import mimetypes
+from openai import OpenAI
+from urllib.parse import urlparse
+from typing import Union, List, Dict, Optional, Literal
+
+def analyze_image(
+    image_source: Union[str, List[str]],
+    prompt: str = "What's in this image?",
+    detail: Literal["auto", "low", "high"] = "auto",
+    model: str = "gpt-4o",
+    max_tokens: int = 300
+) -> Dict[str, Union[str, Dict[str, int]]]:
+    """
+    Analyze one or more images using OpenAI's Vision API.
+    """
+    analyzer = ImageAnalyzer()
+    return analyzer.analyze_image(image_source, prompt, detail, model, max_tokens)
+
+class ImageAnalyzer:
+    """
+    A class for analyzing images using OpenAI's Vision API.
+
+    This class provides methods to analyze both local and remote images using
+    OpenAI's GPT-4 Vision model. It supports multiple image formats and can
+    handle both single and multiple image analysis.
+
+    Attributes:
+        supported_formats (set): Set of supported image file extensions
+        client (OpenAI): OpenAI client instance
+
+    Raises:
+        ValueError: If an invalid API key or unsupported image format is provided
+        FileNotFoundError: If a local image file cannot be found
+        requests.exceptions.RequestException: If there's an error downloading an image
+    """
+
+    def __init__(self, api_key: Optional[str] = None) -> None:
+        """
+        Initialize the ImageAnalyzer with OpenAI API credentials.
+
+        Args:
+            api_key (Optional[str]): OpenAI API key. If None, will use OPENAI_API_KEY
+                environment variable.
+
+        Raises:
+            ValueError: If neither api_key parameter nor OPENAI_API_KEY environment
+                variable is set
+        """
+        self.client = OpenAI(api_key=api_key)
+        self.supported_formats = {'.png', '.jpg', '.jpeg', '.webp'}
+
+    def _encode_image(self, image_path: str) -> str:
+        """
+        Encode a local image file to base64 string.
+
+        Args:
+            image_path (str): Path to the local image file
+
+        Returns:
+            str: Base64 encoded string of the image
+
+        Raises:
+            FileNotFoundError: If the image file doesn't exist
+            IOError: If there's an error reading the file
+        """
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+
+    def _validate_image_format(self, file_path: str) -> bool:
+        """
+        Validate if the image format is supported.
+
+        Args:
+            file_path (str): Path to the image file or URL
+
+        Returns:
+            bool: True if the format is supported, False otherwise
+        """
+        extension = Path(file_path).suffix.lower()
+        return extension in self.supported_formats
+
+    def _download_image(self, url: str, temp_path: str = "temp_image") -> str:
+        """
+        Download an image from a URL and save it to a temporary file.
+
+        Args:
+            url (str): URL of the image to download
+            temp_path (str): Base path for the temporary file
+
+        Returns:
+            str: Path to the downloaded temporary file
+
+        Raises:
+            requests.exceptions.RequestException: If there's an error downloading the image
+            ValueError: If the image format is not supported
+        """
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        content_type = response.headers.get('content-type')
+        extension = mimetypes.guess_extension(content_type) if content_type else Path(urlparse(url).path).suffix
+        
+        if not extension or extension.lower() not in self.supported_formats:
+            raise ValueError(f"Unsupported image format: {extension}")
+            
+        temp_file = f"{temp_path}{extension}"
+        with open(temp_file, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+                
+        return temp_file
+
+    def analyze_image(
+        self,
+        image_source: Union[str, List[str]],
+        prompt: str = "What's in this image?",
+        detail: Literal["auto", "low", "high"] = "auto",
+        model: str = "gpt-4o",
+        max_tokens: int = 300
+    ) -> Dict[str, Union[str, Dict[str, int]]]:
+        """
+        Analyze one or more images using OpenAI's Vision API.
+
+        This method can process both local image files and images from URLs. It supports
+        multiple image formats (PNG, JPG, JPEG, WebP) and can analyze multiple images
+        in a single request.
+
+        Args:
+            image_source (Union[str, List[str]]): Single image path/URL or list of
+                image paths/URLs to analyze. Supports both local files and HTTP(S) URLs.
+            prompt (str, optional): Question or instruction for the model about the
+                image(s). Defaults to "What's in this image?".
+            detail (Literal["auto", "low", "high"], optional): Level of detail for
+                analysis. Affects token usage and cost. Defaults to "auto".
+                - "auto": Let the API choose based on image size
+                - "low": Low resolution analysis (faster, cheaper)
+                - "high": High resolution analysis (more detailed, more expensive)
+            model (str, optional): OpenAI model to use for analysis.
+                Defaults to "gpt-4o".
+            max_tokens (int, optional): Maximum tokens for the response.
+                Defaults to 300.
+
+        Returns:
+            Dict[str, Union[str, Dict[str, int]]]: Dictionary containing:
+                - content (str): The model's analysis of the image(s)
+                - usage (Dict[str, int]): Token usage statistics
+                    - prompt_tokens (int): Tokens used in the prompt
+                    - completion_tokens (int): Tokens used in the completion
+                    - total_tokens (int): Total tokens used
+
+        Raises:
+            ValueError: If image format is unsupported or detail level is invalid
+            FileNotFoundError: If a local image file cannot be found
+            requests.exceptions.RequestException: If there's an error downloading an image
+            openai.OpenAIError: If there's an error with the OpenAI API request
+
+        Examples:
+            # Analyze a local image
+            analyzer = ImageAnalyzer()
+            result = analyzer.analyze_image("path/to/image.jpg")
+            print(result["content"])
+
+            # Analyze an image from URL
+            result = analyzer.analyze_image(
+                "https://example.com/image.jpg",
+                prompt="Describe the main objects in this image",
+                detail="high"
+            )
+
+            # Analyze multiple images
+            images = ["image1.jpg", "https://example.com/image2.jpg"]
+            result = analyzer.analyze_image(
+                image_source=images,
+                prompt="Compare these images"
+            )
+        """
+        if isinstance(image_source, str):
+            image_source = [image_source]
+            
+        content = [{"type": "text", "text": prompt}]
+        temp_files = []
+        
+        try:
+            for source in image_source:
+                is_url = urlparse(source).scheme in ('http', 'https')
+                
+                if is_url:
+                    temp_file = self._download_image(source)
+                    temp_files.append(temp_file)
+                    image_path = temp_file
+                else:
+                    if not os.path.exists(source):
+                        raise FileNotFoundError(f"Image file not found: {source}")
+                    if not self._validate_image_format(source):
+                        raise ValueError(f"Unsupported image format: {source}")
+                    image_path = source
+                
+                base64_image = self._encode_image(image_path)
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}",
+                        "detail": detail
+                    }
+                })
+            
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": content}],
+                max_tokens=max_tokens
+            )
+            
+            return {
+                "content": response.choices[0].message.content,
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+            }
+            
+        finally:
+            for temp_file in temp_files:
+                try:
+                    os.remove(temp_file)
+                except:
+                    pass
 ```
 
