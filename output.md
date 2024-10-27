@@ -528,7 +528,8 @@ You are a highly skilled AI assistant specializing in triage. As a member of an 
 5. **image_agent:**
    - **Expertise:** Image analysis and processing using OpenAI's Vision API.
    - **Capabilities:**
-     - **ImageAnalyzer:** Analyzes both local and remote images using OpenAI's GPT-4 Vision model.
+     - **analyze_image:** Analyzes both local and remote images using OpenAI's GPT-4 Vision model.
+     - **generate_image:** Generates images using OpenAI's DALL-E 3 model.
    - **Use Cases:** Describing image content, extracting text from images, identifying objects or scenes in images.
 
 **Your Task:**
@@ -602,12 +603,13 @@ Learn about the capabilities and limitations of o1 models in our reasoning guide
 """
 
 image_instructions = """
-You are the image_agent, a highly skilled AI assistant specializing in image analysis tasks using OpenAI's Vision API.
-As part of an AI team, your role is to analyze and interpret images effectively using the ImageAnalyzer class.
+You are the image_agent, a highly skilled AI assistant specializing in image analysis and generation tasks using OpenAI's Vision API and DALL-E 3.
+As part of an AI team, your role is to analyze and interpret images effectively using the ImageAnalyzer class and generate new images using DALL-E 3.
 
 **Capabilities:**
-- Analyze both local images and images from URLs
-- Process multiple images simultaneously
+- Analyze both local images and images from URLs using Vision API
+- Generate high-quality images using DALL-E 3
+- Process multiple images simultaneously for analysis
 - Support for various image formats (PNG, JPG, JPEG, WebP)
 - Adjustable detail levels for analysis (low/high)
 - Token usage tracking
@@ -618,10 +620,17 @@ As part of an AI team, your role is to analyze and interpret images effectively 
   - Supports multiple image formats
   - Configurable detail level and response length
 
+- **generate_image:** Creates images using DALL-E 3
+  - Generates high-quality images from text descriptions
+  - Supports different sizes (1024x1024, 1792x1024, 1024x1792)
+  - Adjustable quality (standard/hd) and style (vivid/natural)
+  - Returns image URL and revised prompt
+
 **Your Role:**
-- Interpret user requests related to image analysis
-- Choose appropriate detail levels based on the task requirements
+- Interpret user requests related to image analysis and generation
+- Choose appropriate detail levels and parameters based on task requirements
 - Provide clear, descriptive analysis of image content
+- Generate high-quality images based on user prompts
 - Handle both single and multiple image analysis requests
 - Manage error cases gracefully (unsupported formats, invalid URLs, etc.)
 """
@@ -742,7 +751,7 @@ reasoning_agent = Agent(
 image_agent = Agent(
     name="Image Agent",
     instructions=image_instructions,
-    functions=[analyze_image, transfer_back_to_triage],
+    functions=[analyze_image, generate_image, transfer_back_to_triage],
     model=MODEL,
 )
 
@@ -1111,7 +1120,7 @@ from .web_tools import tavily_search, get_video_transcript, get_website_text_con
 from .code_tools import execute_command, read_file, install_package, run_python_script
 from .research_tools import fetch_report, run_async, generate_research_report
 from .reasoning_tools import reason_with_o1
-from .image_tools import analyze_image
+from .image_tools import analyze_image, generate_image
 
 ```
 
@@ -1280,12 +1289,15 @@ def run_python_script(filename):
 import base64
 import os
 import requests
+import logging
 from pathlib import Path
 from typing import Union, List, Dict, Optional, Literal
 import mimetypes
 from openai import OpenAI
 from urllib.parse import urlparse
 from typing import Union, List, Dict, Optional, Literal
+
+client = OpenAI()
 
 def analyze_image(
     image_source: Union[str, List[str]],
@@ -1509,5 +1521,53 @@ class ImageAnalyzer:
                     os.remove(temp_file)
                 except:
                     pass
+
+def generate_image(
+    prompt: str,
+    size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024",
+    quality: Literal["standard", "hd"] = "hd",
+    style: Literal["vivid", "natural"] = "vivid",
+    model: str = "dall-e-3",
+    n: int = 1,
+    response_format: Literal["url", "b64_json"] = "url"
+) -> dict:
+    """
+    Generate an image using DALL-E 3.
+    
+    Args:
+        prompt (str): Text description of the desired image(s). Max 4000 characters.
+        size (str): Image size - "1024x1024", "1792x1024", or "1024x1792". Defaults to "1024x1024".
+        quality (str): Image quality - "standard" or "hd". Defaults to "hd".
+        style (str): Image style - "vivid" or "natural". Defaults to "vivid".
+        model (str): Model to use. Defaults to "dall-e-3".
+        n (int): Number of images to generate. DALL-E 3 only supports n=1.
+        response_format (str): Format for generated images - "url" or "b64_json". Defaults to "url".
+    
+    Returns:
+        dict: Response from the OpenAI API containing image data
+        
+    Raises:
+        Exception: If the API call fails
+    """
+    try:
+        logging.info(f"Generating image with prompt: {prompt}")
+        response = client.images.generate(
+            model=model,
+            prompt=prompt,
+            n=n,
+            size=size,
+            quality=quality,
+            style=style,
+            response_format=response_format
+        )
+        logging.info("Image generated successfully")
+        return {
+            "url": response.data[0].url,
+            "revised_prompt": getattr(response.data[0], 'revised_prompt', None)
+        }
+    except Exception as e:
+        error_message = f"Error generating image: {str(e)}"
+        logging.error(error_message)
+        return {"error": error_message}
 ```
 

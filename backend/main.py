@@ -2,7 +2,7 @@
 import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect # type: ignore
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable, Optional
 import json
 import asyncio
 from swarm import Swarm, Agent # type: ignore
@@ -39,6 +39,10 @@ def transfer_to_reasoning_agent():
 def transfer_to_image_agent():
     """Call this function to transfer to the image_agent"""
     return image_agent
+
+def transfer_to_weather_agent():
+    """Transfer control to the weather agent"""
+    return weather_agent
 
 triage_agent = Agent(
     name="Triage Agent",
@@ -82,12 +86,20 @@ image_agent = Agent(
     model=MODEL,
 )
 
+weather_agent = Agent(
+    name="Weather Agent",
+    instructions=weather_instructions,
+    functions=[get_current_weather, transfer_back_to_triage],
+    model="gpt-4o"
+)
+
 # Append functions to agents
 triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
 image_agent.functions.extend([transfer_back_to_triage])
+triage_agent.functions.extend([transfer_to_weather_agent])
 
 class Message(BaseModel):
     role: str
