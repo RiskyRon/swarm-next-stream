@@ -32,10 +32,14 @@ def transfer_to_code_agent():
    """Call this function to transfer to the execute_command_agent"""
    return code_agent
 
+def transfer_to_reasoning_agent():
+    """Call this function to transfer to the reasoning_agent"""
+    return reasoning_agent
+
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent],
+    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent],
     model=MODEL,
 )
 
@@ -60,11 +64,18 @@ code_agent = Agent(
     model=MODEL,
 )
 
+reasoning_agent = Agent(
+    name="Reasoning Agent",
+    instructions=reasoning_instructions,
+    functions=[reason_with_o1,transfer_back_to_triage],
+    model=MODEL,
+)
+
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent])
+triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
-
+reasoning_agent.functions.extend([transfer_back_to_triage])
 class Message(BaseModel):
     role: str
     content: str
