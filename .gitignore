@@ -42,4 +42,5 @@ backend/__pycache__/
 backend/my-docs/
 backend/workspace/*
 backend/temp_image*
+backend/tools/__pycache__/
 
