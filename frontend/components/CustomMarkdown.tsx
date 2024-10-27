@@ -46,6 +46,25 @@ export const CustomMarkdown: React.FC<CustomMarkdownProps> = ({ content }) => (
           {children}
         </blockquote>
       ),
+      a: ({ href, children }) => {
+        const youtubeMatch = href?.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+        if (youtubeMatch) {
+          const videoId = youtubeMatch[1];
+          return (
+            <iframe
+              width="320"
+              height="180"
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ borderRadius: '8px' }}
+            ></iframe>
+          );
+        }
+        return <a href={href}>{children}</a>;
+      },
     }}
   >
     {content}

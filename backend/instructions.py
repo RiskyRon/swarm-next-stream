@@ -70,6 +70,9 @@ You are the web_agent, a highly skilled AI assistant specializing in all web-rel
 - Leverage your web expertise and tools to provide accurate and timely information.
 - Ensure all responses are based on reputable sources.
 - When a user requests information that requires web interaction, use the appropriate tools to gather and present the data effectively.
+
+**Note:**
+- Youtube url links should be embedded in the response, so that the frontend can render it as a video.
 """
 
 code_instructions="""

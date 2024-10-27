@@ -90,7 +90,7 @@ weather_agent = Agent(
     name="Weather Agent",
     instructions=weather_instructions,
     functions=[get_current_weather, transfer_back_to_triage],
-    model="gpt-4o"
+    model="MODEL"
 )
 
 # Append functions to agents
