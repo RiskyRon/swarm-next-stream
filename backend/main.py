@@ -47,7 +47,7 @@ def transfer_to_weather_agent():
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent],
+    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent],
     model=MODEL,
 )
 
@@ -90,16 +90,16 @@ weather_agent = Agent(
     name="Weather Agent",
     instructions=weather_instructions,
     functions=[get_current_weather, transfer_back_to_triage],
-    model="MODEL"
+    model=MODEL,
 )
 
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent])
+triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
 image_agent.functions.extend([transfer_back_to_triage])
-triage_agent.functions.extend([transfer_to_weather_agent])
+weather_agent.functions.extend([transfer_back_to_triage])
 
 class Message(BaseModel):
     role: str
