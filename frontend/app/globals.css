@@ -55,7 +55,7 @@ body {
     --secondary-foreground-color: hsl(0, 0%, 98%);
     --muted-color: hsl(240, 3.7%, 15.9%);
     --muted-foreground-color: hsl(240, 5%, 64.9%);
-    --accent-color: hsl(240, 3.7%, 15.9%);
+    --accent-color: hsl(178, 94%, 44%);
     --accent-foreground-color: hsl(0, 0%, 98%);
     --destructive-color: hsl(0, 62.8%, 30.6%);
     --destructive-foreground-color: hsl(0, 0%, 98%);
@@ -81,7 +81,7 @@ body {
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --accent: 178, 94%, 44%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;

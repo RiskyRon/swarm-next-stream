@@ -44,3 +44,7 @@ backend/workspace/*
 backend/temp_image*
 backend/tools/__pycache__/
 
+##random
+backend/tools/assistants_api.md
+get_scripts.py
+
