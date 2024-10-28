@@ -3,7 +3,7 @@ import re
 
 def generate_md_from_tsx_ts(output_file='output.md'):
     excluded_dirs = {'node_modules', '.next', 'venv', '__pycache__', '.git', 'ui'}
-    excluded_files = {'tailwind.config.ts', 'next-env.d.ts', 'get_scripts.py', 'url_screenshot.py'}
+    excluded_files = {'tailwind.config.ts', 'next-env.d.ts', 'get_scripts.py', 'url_screenshot.py', 'output.md'}
 
     with open(output_file, 'w', encoding='utf-8') as f:
         for root, dirs, files in os.walk('.'):

@@ -38,6 +38,11 @@ const ChatBot: React.FC = () => {
     if (!input.trim()) return;
     sendMessage(input);
     setInput('');
+    // Reset the textarea height to its minimum height
+    const textarea = document.querySelector('textarea');
+    if (textarea) {
+      textarea.style.height = '7.5rem';
+    }
   }, [input, sendMessage]);
 
   const handleUpload = useCallback(() => {
