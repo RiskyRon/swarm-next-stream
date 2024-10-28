@@ -6,11 +6,10 @@ const customCodeStyle = {
   ...vscDarkPlus,
 };
 
-
 export const CustomCodeBlock = ({ inline, className, children, ...props }: any) => {
   const match = /language-(\w+)/.exec(className || '');
   return !inline && match ? (
-    <div className="relative my-4">
+    <div className="relative my-4 max-w-full overflow-x-auto">
       <SyntaxHighlighter
         style={customCodeStyle}
         language={match[1]}
@@ -18,12 +17,10 @@ export const CustomCodeBlock = ({ inline, className, children, ...props }: any) 
         customStyle={{
           margin: 0,
           background: 'hsl(var(--secondary))',
-          overflowX: 'auto', // Allow horizontal scrolling
           padding: '1rem',
           border: '1px solid hsl(var(--border))',
           borderRadius: 'calc(var(--radius) - 2px)',
-          whiteSpace: 'pre', // Prevent text wrapping
-          wordWrap: 'normal',
+          minWidth: 'min-content', // Ensures content doesn't shrink below its minimum width
         }}
         {...props}
       >

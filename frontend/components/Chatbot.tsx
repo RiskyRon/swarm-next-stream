@@ -74,20 +74,22 @@ const ChatBot: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="flex-grow overflow-hidden p-0">
+        <CardContent className="flex-grow overflow-hidden p-0 min-h-0">
           <ScrollArea 
-            className="h-full p-4 [&_.scrollbar-thumb]:bg-muted-foreground/50 [&_.scrollbar-thumb]:hover:bg-muted-foreground/80" 
+            className="h-full w-full p-4" 
             ref={scrollAreaRef}
           >
-            {messageElements}
-            {isLoading && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <div className="pr-4">
+              {messageElements}
+              {isLoading && (
+                <div className="flex justify-start mb-4">
+                  <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={messageEndRef} />
+              )}
+              <div ref={messageEndRef} />
+            </div>
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex-shrink-0 p-2">

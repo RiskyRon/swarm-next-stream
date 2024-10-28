@@ -5,8 +5,8 @@ import os
 import re
 
 def generate_md_from_tsx_ts(output_file='output.md'):
-    excluded_dirs = {'node_modules', '.next', 'venv', '__pycache__', '.git', 'ui', 'WORKSPACE', 'backend'}
-    excluded_files = {'next-env.d.ts', 'get_scripts.py', 'url_screenshot.py', 'output.md', 'assistants_api.md'}
+    excluded_dirs = {'node_modules', '.next', '.git', 'ui', 'backend'}
+    excluded_files = {'next-env.d.ts', 'get_scripts.py'}
 
     with open(output_file, 'w', encoding='utf-8') as f:
         for root, dirs, files in os.walk('.'):
@@ -151,7 +151,7 @@ import ChatBot from '@/components/Chatbot';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-between p-0">
       <ChatBot />
     </main>
   );
@@ -205,33 +205,6 @@ body {
 
 @layer base {
   :root {
-    /* Direct color values for picker */
-    --background-color: hsl(240, 90%, 3.9%);
-    --foreground-color: hsl(0, 0%, 98%);
-    --card-color: hsl(240, 90%, 3.9%);
-    --card-foreground-color: hsl(0, 0%, 98%);
-    --popover-color: hsl(240 90% 3.9%);
-    --popover-foreground-color: hsl(0, 0%, 98%);
-    --primary-color: hsl(0, 0%, 98%);
-    --primary-foreground-color: hsl(240, 5.9%, 10%);
-    --secondary-color: hsl(240, 3.7%, 15.9%);
-    --secondary-foreground-color: hsl(0, 0%, 98%);
-    --muted-color: hsl(240, 3.7%, 15.9%);
-    --muted-foreground-color: hsl(240, 5%, 64.9%);
-    --accent-color: hsl(178, 94%, 44%);
-    --accent-foreground-color: hsl(0, 0%, 98%);
-    --destructive-color: hsl(0, 62.8%, 30.6%);
-    --destructive-foreground-color: hsl(0, 0%, 98%);
-    --border-color: hsl(240, 3.7%, 15.9%);
-    --input-color: hsl(240, 3.7%, 15.9%);
-    --ring-color: hsl(240, 4.9%, 83.9%);
-    --chart-1-color: hsl(220, 70%, 50%);
-    --chart-2-color: hsl(160, 60%, 45%);
-    --chart-3-color: hsl(30, 80%, 55%);
-    --chart-4-color: hsl(280, 65%, 60%);
-    --chart-5-color: hsl(340, 75%, 55%);
-    
-    /* Tailwind CSS variables - extracted from the colors above */
     --background: 240 90% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 90% 3.9%;
@@ -259,59 +232,7 @@ body {
     --radius: 0.5rem;
   }
 
-  .light {
-    /* Direct color values for picker */
-    --background-color: hsl(0, 0%, 100%);
-    --foreground-color: hsl(240, 10%, 3.9%);
-    --card-color: hsl(0, 0%, 100%);
-    --card-foreground-color: hsl(240, 10%, 3.9%);
-    --popover-color: hsl(0, 0%, 100%);
-    --popover-foreground-color: hsl(240, 10%, 3.9%);
-    --primary-color: hsl(240, 5.9%, 10%);
-    --primary-foreground-color: hsl(0, 0%, 98%);
-    --secondary-color: hsl(240, 4.8%, 95.9%);
-    --secondary-foreground-color: hsl(240, 5.9%, 10%);
-    --muted-color: hsl(240, 4.8%, 95.9%);
-    --muted-foreground-color: hsl(240, 3.8%, 46.1%);
-    --accent-color: hsl(240, 4.8%, 95.9%);
-    --accent-foreground-color: hsl(240, 5.9%, 10%);
-    --destructive-color: hsl(0, 84.2%, 60.2%);
-    --destructive-foreground-color: hsl(0, 0%, 98%);
-    --border-color: hsl(240, 5.9%, 90%);
-    --input-color: hsl(240, 5.9%, 90%);
-    --ring-color: hsl(240, 10%, 3.9%);
-    --chart-1-color: hsl(12, 76%, 61%);
-    --chart-2-color: hsl(173, 58%, 39%);
-    --chart-3-color: hsl(197, 37%, 24%);
-    --chart-4-color: hsl(43, 74%, 66%);
-    --chart-5-color: hsl(27, 87%, 67%);
-
-    /* Tailwind CSS variables - extracted from the colors above */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
+  .light {}
 }
 
 @layer base {
@@ -545,7 +466,7 @@ const ChatBot: React.FC = () => {
   ), [messages]);
 
   return (
-    <div className="flex flex-col h-screen w-4/5 max-w-[55rem] mx-auto max-h-[90vh] rounded-lg overflow-hidden">
+    <div className="flex flex-col h-screen w-4/5 max-w-[60rem] mx-auto max-h-[96vh] rounded-lg overflow-hidden">
       <Card className="flex flex-col h-full">
         <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
@@ -555,20 +476,22 @@ const ChatBot: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="flex-grow overflow-hidden p-0">
+        <CardContent className="flex-grow overflow-hidden p-0 min-h-0">
           <ScrollArea 
-            className="h-full p-4 [&_.scrollbar-thumb]:bg-muted-foreground/50 [&_.scrollbar-thumb]:hover:bg-muted-foreground/80" 
+            className="h-full w-full p-4" 
             ref={scrollAreaRef}
           >
-            {messageElements}
-            {isLoading && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <div className="pr-4">
+              {messageElements}
+              {isLoading && (
+                <div className="flex justify-start mb-4">
+                  <div className="bg-secondary text-secondary-foreground rounded-lg p-3 flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={messageEndRef} />
+              )}
+              <div ref={messageEndRef} />
+            </div>
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex-shrink-0 p-2">
@@ -636,7 +559,7 @@ interface ChatMessageProps {
 
 export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => (
   <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-    <div className={`flex items-start pt-5 gap-2 max-w-[100%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`flex items-start pt-5 gap-2 max-w-full ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className="flex-shrink-0">
         <img
           src={message.role === 'user' ? '/images/user-avatar.png' : '/images/bot-avatar.png'}
@@ -644,12 +567,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) 
           className="w-10 h-10 rounded-full"
         />
       </div>
-      <div className={`rounded-lg p-3 ${
+      <div className={`rounded-lg p-3 overflow-hidden ${
         message.role === 'user' 
           ? 'bg-secondary text-secondary-foreground border' 
           : 'bg-secondary text-secondary-foreground'
       }`}>
-        <CustomMarkdown content={message.content} />
+        <div className="max-w-full overflow-x-auto">
+          <CustomMarkdown content={message.content} />
+        </div>
         <p className="text-xs mt-2 opacity-50">
           {message.timestamp.toLocaleTimeString()}
         </p>
@@ -675,40 +600,22 @@ const customCodeStyle = {
   ...vscDarkPlus,
 };
 
-const customWrapperStyle = {
-  'pre[class*="language-"]': {
-    ...vscDarkPlus['pre[class*="language-"]'],
-    padding: '1rem',
-    margin: '0.5rem 0',
-    background: 'hsl(var(--secondary))',
-    border: '1px solid hsl(var(--border))',
-    borderRadius: 'calc(var(--radius) - 2px)',
-    overflowX: 'auto',
-    whiteSpace: 'pre',
-  },
-  ':not(pre) > code[class*="language-"]': {
-    ...vscDarkPlus[':not(pre) > code[class*="language-"]'],
-    background: 'hsl(var(--secondary))',
-    padding: '0.2em 0.4em',
-    borderRadius: 'calc(var(--radius) - 4px)',
-  },
-};
-
 export const CustomCodeBlock = ({ inline, className, children, ...props }: any) => {
   const match = /language-(\w+)/.exec(className || '');
   return !inline && match ? (
-    <div className="relative rounded-md overflow-x-auto my-4">
+    <div className="relative my-4 max-w-full overflow-x-auto">
       <SyntaxHighlighter
         style={customCodeStyle}
         language={match[1]}
         PreTag="div"
-        wrapperStyle={customWrapperStyle}
         customStyle={{
           margin: 0,
           background: 'hsl(var(--secondary))',
-          overflowX: 'auto', // Ensure overflow is set to auto here as well
+          padding: '1rem',
+          border: '1px solid hsl(var(--border))',
+          borderRadius: 'calc(var(--radius) - 2px)',
+          minWidth: 'min-content', // Ensures content doesn't shrink below its minimum width
         }}
-        className="scrollbar-custom p-4"
         {...props}
       >
         {String(children).replace(/\n$/, '')}
@@ -720,7 +627,6 @@ export const CustomCodeBlock = ({ inline, className, children, ...props }: any) 
     </code>
   );
 };
-
 ```
 
 ## frontend/components/CustomWeatherCard.tsx
