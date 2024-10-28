@@ -36,7 +36,7 @@ def read_file(file_path):
     """
     Read the contents of various file types from the WORKSPACE directory.
 
-    Supported file types: md, txt, pdf, mdx, py, ts, tsx, js, jsx, css, scss, html
+    Supported file types: md, txt, pdf, mdx, py, ts, tsx, js, jsx, css, scss, html, json, csv, xml
     The function automatically looks for files in the WORKSPACE directory relative to the
     current working directory.
 
@@ -60,7 +60,7 @@ def read_file(file_path):
     full_file_path = os.path.join(workspace_dir, file_path)
     
     file_extension = os.path.splitext(full_file_path)[1].lower()
-    supported_extensions = ['.md', '.txt', '.pdf', '.mdx', '.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.html']
+    supported_extensions = ['.md', '.txt', '.pdf', '.mdx', '.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.html', '.json', '.csv', '.xml']
     
     if file_extension not in supported_extensions:
         raise ValueError(f"Unsupported file type: {file_extension}")
