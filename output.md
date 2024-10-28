@@ -1,3 +1,108 @@
+## getscripts_frontend.py
+
+```typescript
+import os
+import re
+
+def generate_md_from_tsx_ts(output_file='output.md'):
+    excluded_dirs = {'node_modules', '.next', 'venv', '__pycache__', '.git', 'ui', 'WORKSPACE', 'backend'}
+    excluded_files = {'next-env.d.ts', 'get_scripts.py', 'url_screenshot.py', 'output.md', 'assistants_api.md'}
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        for root, dirs, files in os.walk('.'):
+            dirs[:] = [d for d in dirs if d not in excluded_dirs]
+            
+            for file in files:
+                if file.endswith(('.tsx', '.ts', '.py', '.css')) and file not in excluded_files:
+                    file_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(file_path)
+                    
+                    f.write(f"## {relative_path}\n\n")
+                    f.write("```typescript\n")
+                    
+                    with open(file_path, 'r', encoding='utf-8') as script_file:
+                        content = script_file.read()
+                        # Remove BOM if present
+                        content = re.sub(r'^\ufeff', '', content)
+                        f.write(content)
+                    
+                    f.write("\n```\n\n")
+
+    print(f"Markdown file '{output_file}' has been generated.")
+
+# Usage
+generate_md_from_tsx_ts()
+```
+
+## frontend/tailwind.config.ts
+
+```typescript
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+    darkMode: ["class"],
+    content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+  	extend: {
+  		colors: {
+  			background: 'hsl(var(--background))',
+  			foreground: 'hsl(var(--foreground))',
+  			card: {
+  				DEFAULT: 'hsl(var(--card))',
+  				foreground: 'hsl(var(--card-foreground))'
+  			},
+  			popover: {
+  				DEFAULT: 'hsl(var(--popover))',
+  				foreground: 'hsl(var(--popover-foreground))'
+  			},
+  			primary: {
+  				DEFAULT: 'hsl(var(--primary))',
+  				foreground: 'hsl(var(--primary-foreground))'
+  			},
+  			secondary: {
+  				DEFAULT: 'hsl(var(--secondary))',
+  				foreground: 'hsl(var(--secondary-foreground))'
+  			},
+  			muted: {
+  				DEFAULT: 'hsl(var(--muted))',
+  				foreground: 'hsl(var(--muted-foreground))'
+  			},
+  			accent: {
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
+  			},
+  			destructive: {
+  				DEFAULT: 'hsl(var(--destructive))',
+  				foreground: 'hsl(var(--destructive-foreground))'
+  			},
+  			border: 'hsl(var(--border))',
+  			input: 'hsl(var(--input))',
+  			ring: 'hsl(var(--ring))',
+  			chart: {
+  				'1': 'hsl(var(--chart-1))',
+  				'2': 'hsl(var(--chart-2))',
+  				'3': 'hsl(var(--chart-3))',
+  				'4': 'hsl(var(--chart-4))',
+  				'5': 'hsl(var(--chart-5))'
+  			}
+  		},
+  		borderRadius: {
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 4px)'
+  		}
+  	}
+  },
+  plugins: [require("tailwindcss-animate")],
+};
+export default config;
+
+```
+
 ## frontend/app/layout.tsx
 
 ```typescript
@@ -53,6 +158,172 @@ export default function Home() {
 }
 ```
 
+## frontend/app/globals.css
+
+```typescript
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: var(--muted-foreground);
+    opacity: 0.5;
+    border-radius: 4px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    opacity: 0.8;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:horizontal {
+    border-radius: 4px;
+  }
+}
+
+@layer base {
+  :root {
+    /* Direct color values for picker */
+    --background-color: hsl(240, 90%, 3.9%);
+    --foreground-color: hsl(0, 0%, 98%);
+    --card-color: hsl(240, 90%, 3.9%);
+    --card-foreground-color: hsl(0, 0%, 98%);
+    --popover-color: hsl(240 90% 3.9%);
+    --popover-foreground-color: hsl(0, 0%, 98%);
+    --primary-color: hsl(0, 0%, 98%);
+    --primary-foreground-color: hsl(240, 5.9%, 10%);
+    --secondary-color: hsl(240, 3.7%, 15.9%);
+    --secondary-foreground-color: hsl(0, 0%, 98%);
+    --muted-color: hsl(240, 3.7%, 15.9%);
+    --muted-foreground-color: hsl(240, 5%, 64.9%);
+    --accent-color: hsl(178, 94%, 44%);
+    --accent-foreground-color: hsl(0, 0%, 98%);
+    --destructive-color: hsl(0, 62.8%, 30.6%);
+    --destructive-foreground-color: hsl(0, 0%, 98%);
+    --border-color: hsl(240, 3.7%, 15.9%);
+    --input-color: hsl(240, 3.7%, 15.9%);
+    --ring-color: hsl(240, 4.9%, 83.9%);
+    --chart-1-color: hsl(220, 70%, 50%);
+    --chart-2-color: hsl(160, 60%, 45%);
+    --chart-3-color: hsl(30, 80%, 55%);
+    --chart-4-color: hsl(280, 65%, 60%);
+    --chart-5-color: hsl(340, 75%, 55%);
+    
+    /* Tailwind CSS variables - extracted from the colors above */
+    --background: 240 90% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 90% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 90% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 90% 3.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 178, 94%, 44%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.5rem;
+  }
+
+  .light {
+    /* Direct color values for picker */
+    --background-color: hsl(0, 0%, 100%);
+    --foreground-color: hsl(240, 10%, 3.9%);
+    --card-color: hsl(0, 0%, 100%);
+    --card-foreground-color: hsl(240, 10%, 3.9%);
+    --popover-color: hsl(0, 0%, 100%);
+    --popover-foreground-color: hsl(240, 10%, 3.9%);
+    --primary-color: hsl(240, 5.9%, 10%);
+    --primary-foreground-color: hsl(0, 0%, 98%);
+    --secondary-color: hsl(240, 4.8%, 95.9%);
+    --secondary-foreground-color: hsl(240, 5.9%, 10%);
+    --muted-color: hsl(240, 4.8%, 95.9%);
+    --muted-foreground-color: hsl(240, 3.8%, 46.1%);
+    --accent-color: hsl(240, 4.8%, 95.9%);
+    --accent-foreground-color: hsl(240, 5.9%, 10%);
+    --destructive-color: hsl(0, 84.2%, 60.2%);
+    --destructive-foreground-color: hsl(0, 0%, 98%);
+    --border-color: hsl(240, 5.9%, 90%);
+    --input-color: hsl(240, 5.9%, 90%);
+    --ring-color: hsl(240, 10%, 3.9%);
+    --chart-1-color: hsl(12, 76%, 61%);
+    --chart-2-color: hsl(173, 58%, 39%);
+    --chart-3-color: hsl(197, 37%, 24%);
+    --chart-4-color: hsl(43, 74%, 66%);
+    --chart-5-color: hsl(27, 87%, 67%);
+
+    /* Tailwind CSS variables - extracted from the colors above */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+```
+
 ## frontend/app/api/chat/route.ts
 
 ```typescript
@@ -78,9 +349,13 @@ export async function POST(req: NextRequest) {
 ## frontend/components/CustomMarkdown.tsx
 
 ```typescript
+// frontend/components/CustomMarkdown.tsx
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CustomCodeBlock } from '@/components/CustomCodeBlock';
+import { CustomWeatherCard } from '@/components/CustomWeatherCard';
+import { LinkIcon } from 'lucide-react';
 
 interface CustomMarkdownProps {
   content: string;
@@ -90,7 +365,34 @@ export const CustomMarkdown: React.FC<CustomMarkdownProps> = ({ content }) => (
   <ReactMarkdown
     className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
     components={{
-      code: CustomCodeBlock,
+      code({ node, inline, className, children, ...props }: any) {
+        const match = /language-(\w+)/.exec(className || '');
+        if (match && match[1] === 'weather') {
+          try {
+            const data = JSON.parse(String(children).replace(/\n$/, ''));
+            return <CustomWeatherCard data={data} />;
+          } catch (error) {
+            console.error('Error parsing weather data:', error);
+            return <div>Error displaying weather data</div>;
+          }
+        }
+        if (inline) {
+          return (
+            <code className="px-1.5 py-0.5 rounded font-mono text-sm bg-muted text-muted-foreground" {...props}>
+              {children}
+            </code>
+          );
+        }
+        return (
+          <CustomCodeBlock
+            inline={inline}
+            className={className}
+            {...props}
+          >
+            {children}
+          </CustomCodeBlock>
+        );
+      },
       p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
       ul: ({ children }) => <ul className="list-disc pl-6 mb-4 last:mb-0">{children}</ul>,
       ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 last:mb-0">{children}</ol>,
@@ -98,7 +400,74 @@ export const CustomMarkdown: React.FC<CustomMarkdownProps> = ({ content }) => (
       h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6">{children}</h1>,
       h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5">{children}</h2>,
       h3: ({ children }) => <h3 className="text-lg font-bold mb-2 mt-4">{children}</h3>,
-      blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+      blockquote: ({ children }) => (
+        <blockquote className="border-l-4 border-muted pl-4 italic my-4">
+          {children}
+        </blockquote>
+      ),
+      a: ({ href, children }) => {
+        // YouTube video handling
+        const youtubeMatch = href?.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+        if (youtubeMatch) {
+          const videoId = youtubeMatch[1];
+          return (
+            <div className="my-4">
+              <iframe
+                width="320"
+                height="180"
+                src={`https://www.youtube.com/embed/${videoId}`}
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="rounded-lg shadow-lg"
+              ></iframe>
+            </div>
+          );
+        }
+
+        // Regular link handling with different styles based on type
+        const isEmail = href?.startsWith('mailto:');
+        const isPhone = href?.startsWith('tel:');
+        const isExternal = href?.startsWith('http') || href?.startsWith('https');
+        
+        let linkClass = "inline-flex items-center gap-1 px-2 py-0.5 rounded transition-colors ";
+        let icon = null;
+        
+        if (isEmail) {
+          linkClass += "bg-primary/10 text-primary hover:bg-primary/20";
+          icon = "📧";
+        } else if (isPhone) {
+          linkClass += "bg-secondary/10 text-secondary hover:bg-secondary/20";
+          icon = "📞";
+        } else if (isExternal) {
+          linkClass += "bg-accent/10 text-accent hover:bg-accent/20";
+          icon = <LinkIcon className="h-3 w-3" />;
+        } else {
+          linkClass += "bg-muted text-muted-foreground hover:bg-muted/80";
+        }
+
+        return (
+          <a 
+            href={href}
+            className={linkClass}
+            target={isExternal ? "_blank" : undefined}
+            rel={isExternal ? "noopener noreferrer" : undefined}
+          >
+            {icon}
+            <span className="text-sm">{children}</span>
+          </a>
+        );
+      },
+      em: ({ children }) => (
+        <em className="italic text-primary">
+          {children}
+        </em>
+      ),
+      strong: ({ children }) => (
+        <strong className="font-bold text-primary">
+          {children}
+        </strong>
+      ),
     }}
   >
     {content}
@@ -150,6 +519,11 @@ const ChatBot: React.FC = () => {
     if (!input.trim()) return;
     sendMessage(input);
     setInput('');
+    // Reset the textarea height to its minimum height
+    const textarea = document.querySelector('textarea');
+    if (textarea) {
+      textarea.style.height = '7.5rem';
+    }
   }, [input, sendMessage]);
 
   const handleUpload = useCallback(() => {
@@ -309,19 +683,21 @@ const customWrapperStyle = {
     background: 'hsl(var(--secondary))',
     border: '1px solid hsl(var(--border))',
     borderRadius: 'calc(var(--radius) - 2px)',
+    overflowX: 'auto',
+    whiteSpace: 'pre',
   },
   ':not(pre) > code[class*="language-"]': {
     ...vscDarkPlus[':not(pre) > code[class*="language-"]'],
     background: 'hsl(var(--secondary))',
     padding: '0.2em 0.4em',
     borderRadius: 'calc(var(--radius) - 4px)',
-  }
+  },
 };
 
 export const CustomCodeBlock = ({ inline, className, children, ...props }: any) => {
   const match = /language-(\w+)/.exec(className || '');
   return !inline && match ? (
-    <div className="relative rounded-md overflow-hidden my-4">
+    <div className="relative rounded-md overflow-x-auto my-4">
       <SyntaxHighlighter
         style={customCodeStyle}
         language={match[1]}
@@ -330,6 +706,7 @@ export const CustomCodeBlock = ({ inline, className, children, ...props }: any) 
         customStyle={{
           margin: 0,
           background: 'hsl(var(--secondary))',
+          overflowX: 'auto', // Ensure overflow is set to auto here as well
         }}
         className="scrollbar-custom p-4"
         {...props}
@@ -343,6 +720,59 @@ export const CustomCodeBlock = ({ inline, className, children, ...props }: any) 
     </code>
   );
 };
+
+```
+
+## frontend/components/CustomWeatherCard.tsx
+
+```typescript
+// frontend/components/CustomWeatherCard.tsx
+
+import React from 'react';
+
+interface WeatherData {
+  location: string;
+  temperature_c: string;
+  temperature_f: string;
+  condition: string;
+  icon_url?: string;
+  humidity?: string;
+  wind_kph?: string;
+  wind_mph?: string;
+  last_updated?: string;
+  [key: string]: any;
+}
+
+interface CustomWeatherCardProps {
+  data: WeatherData;
+}
+
+export const CustomWeatherCard: React.FC<CustomWeatherCardProps> = ({ data }) => (
+  <div className="p-4 bg-secondary text-secondary-foreground rounded-md border">
+    <h2 className="text-lg font-bold">{data.location}</h2>
+    <div className="flex items-center mt-2">
+      {data.icon_url && (
+        <img
+          src={data.icon_url}
+          alt={data.condition}
+          className="w-16 h-16 mr-4"
+        />
+      )}
+      <div>
+        <p className="text-4xl font-bold">{data.temperature_c}</p>
+        <p className="capitalize">{data.condition}</p>
+      </div>
+    </div>
+    {/* Additional weather details */}
+    <div className="mt-2">
+      {data.humidity && <p>Humidity: {data.humidity}</p>}
+      {data.wind_kph && <p>Wind: {data.wind_kph}</p>}
+      {data.last_updated && <p>Last Updated: {data.last_updated}</p>}
+    </div>
+  </div>
+);
+
+export default CustomWeatherCard;
 
 ```
 
@@ -486,1088 +916,5 @@ export const useWebSocket = (url: string): WebSocketHookReturn => {
 
 export type { Message };
 
-```
-
-## backend/instructions.py
-
-```typescript
-triage_instructions="""
-You are a highly skilled AI assistant specializing in triage. As a member of an AI team, each with specialized skills and tools, your role is to understand user inquiries and connect them to the most appropriate team member.
-
-**Team Members:**
-
-1. **triage_agent (Yourself):**
-   - **Role:** Understands the user's question and determines the best course of action.
-   - **Responsibility:** Connects the user to other team members based on the nature of the inquiry.
-
-2. **code_agent:**
-   - **Expertise:** Code interpretation and execution, proficient in shell, bash, and Python.
-   - **Capabilities:** 
-     - **execute_code:** Executes Python code and returns the output.
-     - **read_file:** Reads files from a given path, including PDFs.
-     - **install_package:** Installs Python packages into the user's virtual environment.
-     - **run_python_script:** Runs Python scripts and provides the output.
-   - **Use Cases:** Data analysis, algorithm development, debugging, and more.
-
-3. **web_agent:**
-   - **Expertise:** Web-related tasks and information retrieval from reputable sources.
-   - **Capabilities:** 
-     - **tavily_search:** Searches the internet using the Tavily client for relevant information.
-     - **get_video_transcript:** Retrieves transcripts of YouTube videos.
-     - **get_all_urls:** Gathers a list of connected URLs from a specified URL.
-     - **get_website_text_content:** Extracts the content of a webpage.
-     - **handle_research_report:** Generates deep and detailed research reports asynchronously.
-   - **Use Cases:** Answering questions about current events, facts, general knowledge, web scraping, and research.
-
-4. **reasoning_agent:**
-   - **Expertise:** Advanced reasoning and problem-solving using OpenAI's latest and most advanced model, o1-preview.
-   - **Capabilities:**
-     - **reason_with_o1:** Utilizes OpenAI's new o1-preview model for complex reasoning tasks.
-   - **Use Cases:** Solving complex problems, providing detailed explanations, and handling tasks that require advanced cognitive abilities.
-
-5. **image_agent:**
-   - **Expertise:** Image analysis and processing using OpenAI's Vision API.
-   - **Capabilities:**
-     - **analyze_image:** Analyzes both local and remote images using OpenAI's GPT-4 Vision model.
-     - **generate_image:** Generates images using OpenAI's DALL-E 3 model.
-   - **Use Cases:** Describing image content, extracting text from images, identifying objects or scenes in images.
-
-**Your Task:**
-- Assess the user's request.
-- Determine which team member is best suited to handle the request.
-- Connect the user to the appropriate team member to ensure efficient and accurate assistance.
-"""
-
-web_instructions="""
-You are the web_agent, a highly skilled AI assistant specializing in all web-related tasks. Utilize your tools to fulfill user requests effectively. Your capabilities include:
-
-- **Browsing the Web:** Access and navigate websites to gather information.
-- **Scraping URLs:** Extract URLs from web pages.
-- **Retrieving Connected URLs:** Find all URLs linked to a specific URL.
-- **Generating Research Reports:** Use the `handle_research_report` function to create comprehensive and detailed research reports asynchronously.
-
-**Available Tools:**
-- **tavily_search:** Search the internet using the Tavily client for relevant information.
-- **get_video_transcript:** Obtain transcripts of YouTube videos.
-- **get_all_urls:** Retrieve a list of connected URLs from a given URL.
-- **get_website_text_content:** Extract the textual content from a webpage.
-- **handle_research_report:** Generate in-depth research reports.
-
-**Your Role:**
-- Leverage your web expertise and tools to provide accurate and timely information.
-- Ensure all responses are based on reputable sources.
-- When a user requests information that requires web interaction, use the appropriate tools to gather and present the data effectively.
-"""
-
-code_instructions="""
-You are the code_agent, a highly skilled AI assistant specializing in executing and interpreting code. As part of an AI team, your role is to address user queries by executing code efficiently. You have access to a robust set of tools tailored for coding tasks.
-
-**Capabilities:**
-- **Bash Command Execution:** Execute bash commands and return the output.
-- **Python Code Execution:** Run Python code snippets and provide results.
-- **Package Installation:** Install necessary Python packages upon user confirmation.
-- **Script Execution:** Run complete Python scripts and return their outputs.
-
-**Available Tools:**
-- **execute_code:** Executes Python code and returns the output.
-- **read_file:** Reads files from a specified path, including PDFs.
-- **install_package:** Installs Python packages into the user's virtual environment. *Note: Always confirm with the user before installing any packages.*
-- **run_python_script:** Executes Python scripts and provides the resulting output.
-
-**Your Role:**
-- Analyze the user's coding-related request.
-- Determine the best approach to address the query using your available tools.
-- Execute code responsibly, ensuring that any package installations are approved by the user beforehand.
-- Provide clear explanations of the results to aid the user's understanding.
-- Assist with tasks such as data analysis, algorithm development, debugging, and more, leveraging your coding expertise.
-"""
-
-reasoning_instructions="""
-You are the reasoning_agent, a highly advanced AI assistant specializing in complex problem-solving and detailed reasoning. Your primary tool is the o1-preview model, which you use to tackle challenging questions and provide in-depth explanations.
-
-The o1 series of large language models are trained with reinforcement learning to perform complex reasoning. o1 models think before they answer, producing a long internal chain of thought before responding to the user.
-Learn about the capabilities and limitations of o1 models in our reasoning guide.
-
-**Available Tools:**
-- **reason_with_o1:** Access the o1-preview model to perform advanced reasoning tasks.
-
-**Your Role:**
-- Call the `reason_with_o1` function to generate well-reasoned responses.
-- Use the o1-preview model through the `reason_with_o1` function to generate well-reasoned responses.
-- Provide clear, detailed, and logically structured explanations or solutions.
-- Handle tasks that require advanced cognitive abilities, such as:
-  - Solving complex theoretical problems
-  - Analyzing abstract concepts
-  - Providing multi-step explanations for complicated processes
-  - Offering nuanced perspectives on complex issues
-"""
-
-image_instructions = """
-You are the image_agent, a highly skilled AI assistant specializing in image analysis and generation tasks using OpenAI's Vision API and DALL-E 3.
-As part of an AI team, your role is to analyze and interpret images effectively using the ImageAnalyzer class and generate new images using DALL-E 3.
-
-**Capabilities:**
-- Analyze both local images and images from URLs using Vision API
-- Generate high-quality images using DALL-E 3
-- Process multiple images simultaneously for analysis
-- Support for various image formats (PNG, JPG, JPEG, WebP)
-- Adjustable detail levels for analysis (low/high)
-- Token usage tracking
-
-**Available Tools:**
-- **analyze_image:** Analyzes one or more images using OpenAI's Vision API and returns detailed descriptions
-  - Can process both local files and URLs
-  - Supports multiple image formats
-  - Configurable detail level and response length
-
-- **generate_image:** Creates images using DALL-E 3
-  - Generates high-quality images from text descriptions
-  - Supports different sizes (1024x1024, 1792x1024, 1024x1792)
-  - Adjustable quality (standard/hd) and style (vivid/natural)
-  - Returns image URL and revised prompt
-
-**Your Role:**
-- Interpret user requests related to image analysis and generation
-- Choose appropriate detail levels and parameters based on task requirements
-- Provide clear, descriptive analysis of image content
-- Generate high-quality images based on user prompts
-- Handle both single and multiple image analysis requests
-- Manage error cases gracefully (unsupported formats, invalid URLs, etc.)
-"""
-```
-
-## backend/test.py
-
-```typescript
-import asyncio
-import websockets # type: ignore
-import json
-
-async def test_websocket():
-    uri = "ws://localhost:8000/ws"
-    async with websockets.connect(uri) as websocket:
-        while True:
-            message = input("Enter your message (or 'quit' to exit): ")
-            if message.lower() == 'quit':
-                break
-            
-            await websocket.send(message)
-            print("Message sent. Waiting for response...")
-
-            while True:
-                response = await websocket.recv()
-                data = json.loads(response)
-                if data['type'] == 'agent_change':
-                    print(f"Agent changed to: {data['agent']}")
-                elif data['type'] == 'content':
-                    print(data['content'], end='', flush=True)
-                elif data['type'] == 'end':
-                    print(f"\nResponse ended. Final agent: {data['agent']}")
-                    break
-
-asyncio.get_event_loop().run_until_complete(test_websocket())
-```
-
-## backend/main.py
-
-```typescript
-# main.py
-import os
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect # type: ignore
-from pydantic import BaseModel
-from typing import List, Dict, Any
-import json
-import asyncio
-from swarm import Swarm, Agent # type: ignore
-import nest_asyncio # type: ignore
-
-# Apply nest_asyncio
-nest_asyncio.apply()
-
-from tools.__init__ import *
-from instructions import *
-
-app = FastAPI()
-
-client = Swarm()
-
-MODEL = "gpt-4o-mini"
-
-def transfer_back_to_triage():
-    """Call this function to transfer back to the triage_agent."""
-    return triage_agent
-
-def transfer_to_web_agent():
-   """Call this function to transfer to the web_agent."""
-   return web_agent
-
-def transfer_to_code_agent():
-   """Call this function to transfer to the execute_command_agent"""
-   return code_agent
-
-def transfer_to_reasoning_agent():
-    """Call this function to transfer to the reasoning_agent"""
-    return reasoning_agent
-
-def transfer_to_image_agent():
-    """Call this function to transfer to the image_agent"""
-    return image_agent
-
-triage_agent = Agent(
-    name="Triage Agent",
-    instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent],
-    model=MODEL,
-)
-
-web_agent = Agent(
-    name="Web Agent",
-    instructions=web_instructions,
-    functions=[
-        tavily_search, 
-        get_video_transcript, 
-        get_website_text_content, 
-        save_to_md, 
-        get_all_urls, 
-        generate_research_report
-    ],
-    model=MODEL,
-)
-
-code_agent = Agent(
-    name="Code Agent",
-    instructions=code_instructions,
-    functions=[execute_command, read_file, install_package, run_python_script, transfer_back_to_triage],
-    model=MODEL,
-)
-
-reasoning_agent = Agent(
-    name="Reasoning Agent",
-    instructions=reasoning_instructions,
-    functions=[reason_with_o1,transfer_back_to_triage],
-    model=MODEL,
-)
-
-image_agent = Agent(
-    name="Image Agent",
-    instructions=image_instructions,
-    functions=[analyze_image, generate_image, transfer_back_to_triage],
-    model=MODEL,
-)
-
-# Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent])
-web_agent.functions.extend([transfer_back_to_triage])
-code_agent.functions.extend([transfer_back_to_triage])
-reasoning_agent.functions.extend([transfer_back_to_triage])
-image_agent.functions.extend([transfer_back_to_triage])
-
-class Message(BaseModel):
-    role: str
-    content: str
-
-class ConversationRequest(BaseModel):
-    messages: List[Message]
-
-@app.post("/chat")
-async def chat(request: ConversationRequest):
-    messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
-    agent = triage_agent
-    response = client.run(agent=agent, messages=messages)
-    return {"response": response.messages[-1]["content"], "agent": response.agent.name}
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    agent = triage_agent
-
-    try:
-        while True:
-            data = await websocket.receive_json()
-            message = data['message']
-            history = data.get('history', [])
-
-            # Convert history to the format expected by the Swarm client
-            messages = [{"role": msg["role"], "content": msg["content"]} for msg in history]
-            messages.append({"role": "user", "content": message})
-
-            async def process_stream():
-                stream = client.run(agent=agent, messages=messages, stream=True, debug=True)
-                current_agent_name = None
-                for chunk in stream:
-                    if isinstance(chunk, dict):
-                        if 'sender' in chunk and chunk['sender'] != current_agent_name:
-                            current_agent_name = chunk['sender']
-                            await websocket.send_json({"type": "agent_change", "agent": current_agent_name})
-                        if 'content' in chunk and chunk['content'] is not None:
-                            await websocket.send_json({"type": "content", "content": chunk['content']})
-                    await asyncio.sleep(0)
-
-            # Create a new task for processing the stream
-            await asyncio.create_task(process_stream())
-
-            response = client.run(agent=agent, messages=messages)
-            agent = response.agent
-
-            await websocket.send_json({"type": "end", "agent": agent.name})
-
-    except WebSocketDisconnect:
-        print("WebSocket disconnected")
-
-if __name__ == "__main__":
-    import uvicorn # type: ignore
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-```
-
-## backend/tools/web_tools.py
-
-```typescript
-import trafilatura # type: ignore
-import os
-import logging
-from bs4 import BeautifulSoup # type: ignore
-from tavily import TavilyClient # type: ignore
-from urllib.parse import urljoin, urlparse
-from youtube_transcript_api import YouTubeTranscriptApi # type: ignore
-from gpt_researcher import GPTResearcher # type: ignore
-import asyncio
-import nest_asyncio  # type: ignore # Add this import
-
-# Apply nest_asyncio to allow nested event loops
-nest_asyncio.apply()
-
-tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-
-def tavily_search(query: str) -> str:
-    """
-    Perform a search using the Tavily API.
-
-    This function takes a search query and uses the Tavily client to perform a basic search.
-    It returns the search context limited to a maximum of 8000 tokens.
-
-    Args:
-        query (str): The search query string.
-
-    Returns:
-        str: The search result context or an error message if the search fails.
-    """
-    logging.info(f"Performing Tavily search with query: {query}")
-    try:
-        search_result = tavily_client.get_search_context(query, search_depth="basic", max_tokens=8000)
-        logging.info("Tavily search completed successfully")
-        return search_result
-    except Exception as e:
-        error_message = f"Error performing Tavily search: {str(e)}"
-        logging.error(error_message)
-        return error_message
-
-
-
-async def fetch_report(query):
-    """
-    Fetch a research report based on the provided query and report type.
-    """
-    researcher = GPTResearcher(query=query)
-    await researcher.conduct_research()
-    report = await researcher.write_report()
-    return report
-
-def run_async(coroutine):
-    """Helper function to run async functions in a sync context."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coroutine)
-
-def generate_research_report(query: str) -> str:
-    """
-    Synchronous function to generate a research report.
-    Uses the current event loop if one exists, or creates a new one if needed.
-    """
-    async def _async_research():
-        try:
-            researcher = GPTResearcher(query=query)
-            await researcher.conduct_research()
-            return await researcher.write_report()
-        except Exception as e:
-            logging.error(f"Error in _async_research: {str(e)}")
-            return f"Error conducting research: {str(e)}"
-
-    try:
-        # Get the current event loop
-        loop = asyncio.get_running_loop()
-        # Create a new task in the current loop
-        return loop.run_until_complete(_async_research())
-    except RuntimeError:
-        # If no event loop is running, create a new one
-        return asyncio.run(_async_research())
-    except Exception as e:
-        logging.error(f"Error in generate_research_report: {str(e)}")
-        return f"Error generating research report: {str(e)}"
-
-def get_video_transcript(video_id):
-    """
-    Retrieve the transcript of a YouTube video.
-
-    This function takes a YouTube video ID and attempts to fetch its transcript
-    using the YouTubeTranscriptApi.
-
-    Args:
-        video_id (str): The ID of the YouTube video.
-
-    Returns:
-        list or str: A list containing the transcript data if successful,
-                     or an error message string if the retrieval fails.
-    """
-    logging.info(f"Fetching transcript for video ID: {video_id}")
-    try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        logging.info("Video transcript fetched successfully")
-        return transcript
-    except Exception as e:
-        error_message = f"An error occurred: {str(e)}"
-        logging.error(error_message)
-        return error_message
-    
-def get_website_text_content(url: str) -> str:
-    """
-    Fetches and extracts the main text content from a given URL.
-
-    Args:
-        url (str): The URL of the website to fetch content from.
-
-    Returns:
-        str: The extracted text content from the website.
-
-    Raises:
-        Any exceptions raised by trafilatura.fetch_url or trafilatura.extract.
-    """
-    logging.info(f"Fetching content from URL: {url}")
-    downloaded = trafilatura.fetch_url(url)
-    text = trafilatura.extract(downloaded)
-    logging.info("Website content extracted successfully")
-    return text
-
-def save_to_md(text: str, filename: str) -> None:
-    """
-    Saves the given text content to a markdown file.
-
-    Args:
-        text (str): The text content to be saved.
-        filename (str): The name of the file to save the content to.
-
-    Returns:
-        None
-
-    Raises:
-        IOError: If there's an issue writing to the file.
-    """
-    logging.info(f"Saving content to file: {filename}")
-    try:
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(text)
-        logging.info(f"Content saved successfully to {filename}")
-    except IOError as e:
-        logging.error(f"Error saving content to file: {str(e)}")
-
-def get_all_urls(base_url):
-    """
-    Process a given URL to find all connected URLs within the same domain.
-
-    This function downloads the content of the base_url, extracts all links,
-    filters for links within the same domain and removes duplicates.
-
-    Args:
-        base_url (str): The URL to process.
-
-    Returns:
-        list: A list of unique URLs connected to the base_url within the same domain.
-
-    Raises:
-        Exception: If there's an error during URL processing.
-    """
-    logging.info(f"Processing URL: {base_url}")
-    connected_urls = []
-    try:
-        downloaded = trafilatura.fetch_url(base_url)
-        if downloaded is None:
-            logging.warning(f"Failed to download {base_url}")
-            return []
-
-        soup = BeautifulSoup(downloaded, 'lxml')
-        
-        for link in soup.find_all('a', href=True):
-            url = urljoin(base_url, link['href'])
-            if urlparse(url).netloc == urlparse(base_url).netloc:
-                connected_urls.append(url)
-
-        # Remove duplicates
-        connected_urls = list(set(connected_urls))
-
-    except Exception as e:
-        logging.error(f"Error processing URL: {str(e)}")
-
-    return connected_urls
-```
-
-## backend/tools/research_tools.py
-
-```typescript
-import asyncio
-import logging
-from gpt_researcher import GPTResearcher # type: ignore
-import asyncio
-import nest_asyncio  # type: ignore # Add this import
-
-# Apply nest_asyncio to allow nested event loops
-nest_asyncio.apply()
-async def fetch_report(query):
-    """
-    Fetch a research report based on the provided query and report type.
-    """
-    researcher = GPTResearcher(query=query)
-    await researcher.conduct_research()
-    report = await researcher.write_report()
-    return report
-
-def run_async(coroutine):
-    """Helper function to run async functions in a sync context."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coroutine)
-
-def generate_research_report(query: str) -> str:
-    """
-    Synchronous function to generate a research report.
-    Uses the current event loop if one exists, or creates a new one if needed.
-    """
-    async def _async_research():
-        try:
-            researcher = GPTResearcher(query=query)
-            await researcher.conduct_research()
-            return await researcher.write_report()
-        except Exception as e:
-            logging.error(f"Error in _async_research: {str(e)}")
-            return f"Error conducting research: {str(e)}"
-
-    try:
-        # Get the current event loop
-        loop = asyncio.get_running_loop()
-        # Create a new task in the current loop
-        return loop.run_until_complete(_async_research())
-    except RuntimeError:
-        # If no event loop is running, create a new one
-        return asyncio.run(_async_research())
-    except Exception as e:
-        logging.error(f"Error in generate_research_report: {str(e)}")
-        return f"Error generating research report: {str(e)}"
-```
-
-## backend/tools/reasoning_tools.py
-
-```typescript
-from openai import OpenAI
-from typing import List, Dict, Generator
-
-client = OpenAI()
-
-def reason_with_o1(
-    messages: List[Dict[str, str]], 
-) -> Generator[str, None, None]:
-    """
-    Stream chat completions from OpenAI API.
-    
-    Args:
-        messages: List of message dictionaries with 'role' and 'content' keys
-    
-    Yields:
-        Content chunks from the streaming response
-        
-    Example:
-        messages = [
-            {"role": "user", "content": "Hello!"}
-        ]
-        
-        for chunk in stream_chat_completion(messages):
-            print(chunk, end='', flush=True)
-    """
-    # Create new client if none provided
-    if client is None:
-        client = OpenAI()
-    
-    # Create streaming completion
-    completion = client.chat.completions.create(
-        model="o1-preview",
-        messages=messages,
-        stream=True,
-    )
-    
-    # Yield content from chunks
-    for chunk in completion:
-        if chunk.choices[0].delta.content is not None:
-            yield chunk.choices[0].delta.content
-```
-
-## backend/tools/__init__.py
-
-```typescript
-from .web_tools import tavily_search, get_video_transcript, get_website_text_content, get_all_urls, save_to_md
-from .code_tools import execute_command, read_file, install_package, run_python_script
-from .research_tools import fetch_report, run_async, generate_research_report
-from .reasoning_tools import reason_with_o1
-from .image_tools import analyze_image, generate_image
-
-```
-
-## backend/tools/code_tools.py
-
-```typescript
-import os
-import subprocess
-import logging
-import PyPDF2 # type: ignore
-
-def execute_command(command):
-    """
-    Execute a shell command and return its output.
-
-    This function runs a given shell command using subprocess and returns the command's
-    standard output. If the command fails, it returns the error message. This function has many uses. For example, performing CRUD operations, running a script, or executing a system command, using webget or curl to download a file, etc.
-
-    Args:
-        command (str): The shell command to execute.
-
-    Returns:
-        str: The command's standard output if successful, or an error message if the command fails.
-    """
-    logging.info(f"Executing command: {command}")
-    current_dir = os.getcwd()
-    workspace_dir = os.path.join(current_dir, 'WORKSPACE')
-    
-    try:
-        os.chdir(workspace_dir)
-        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        logging.info("Command executed successfully")
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        error_message = f"Command failed with error: {e.stderr.strip()}"
-        logging.error(error_message)
-        return error_message
-    finally:
-        os.chdir(current_dir)
-
-def read_file(file_path):
-    """
-    Read the contents of various file types from the WORKSPACE directory.
-
-    Supported file types: md, txt, pdf, mdx, py, ts, tsx, js, jsx, css, scss, html
-    The function automatically looks for files in the WORKSPACE directory relative to the
-    current working directory.
-
-    Args:
-        file_path (str): The path to the file to be read, relative to WORKSPACE directory.
-
-    Returns:
-        str: The contents of the file.
-
-    Raises:
-        ValueError: If the file type is not supported.
-        IOError: If there's an issue reading the file.
-    """
-    logging.info(f"Reading file: {file_path}")
-    
-    # Get the current directory and construct the WORKSPACE path
-    current_dir = os.getcwd()
-    workspace_dir = os.path.join(current_dir, 'WORKSPACE')
-    
-    # Construct the full file path within WORKSPACE
-    full_file_path = os.path.join(workspace_dir, file_path)
-    
-    file_extension = os.path.splitext(full_file_path)[1].lower()
-    supported_extensions = ['.md', '.txt', '.pdf', '.mdx', '.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.html']
-    
-    if file_extension not in supported_extensions:
-        raise ValueError(f"Unsupported file type: {file_extension}")
-    
-    try:
-        if file_extension == '.pdf':
-            with open(full_file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                content = ""
-                for page in pdf_reader.pages:
-                    content += page.extract_text()
-        else:
-            with open(full_file_path, 'r', encoding='utf-8') as file:
-                content = file.read()
-        
-        logging.info(f"File {full_file_path} read successfully")
-        return content
-    
-    except IOError as e:
-        logging.error(f"Error reading file {full_file_path}: {str(e)}")
-        raise
-
-def install_package(package_name):
-    """
-    Install a Python package in the /venv virtual environment.
-
-    Args:
-        package_name (str): The name of the package to install.
-
-    Returns:
-        str: The output of the installation command or an error message.
-    """
-    logging.info(f"Installing package: {package_name}")
-    venv_path = "venv"
-    pip_path = f"{venv_path}/bin/pip"
-    
-    if not os.path.exists(pip_path):
-        error_message = f"Virtual environment not found at {venv_path}"
-        logging.error(error_message)
-        return error_message
-    
-    try:
-        result = subprocess.run([pip_path, "install", package_name], 
-                                check=True, 
-                                stdout=subprocess.PIPE, 
-                                stderr=subprocess.PIPE, 
-                                text=True)
-        logging.info(f"Package {package_name} installed successfully")
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        error_message = f"Failed to install package {package_name}: {e.stderr.strip()}"
-        logging.error(error_message)
-        return error_message
-
-def run_python_script(filename):
-    """
-    Run a Python script using the Python interpreter from the /venv virtual environment.
-
-    Args:
-        filename (str): The name of the Python script to run.
-
-    Returns:
-        str: The output of the script or an error message.
-    """
-    logging.info(f"Running Python script: {filename}")
-    venv_path = "/venv"
-    python_path = f"{venv_path}/bin/python"
-    
-    if not os.path.exists(python_path):
-        error_message = f"Virtual environment not found at {venv_path}"
-        logging.error(error_message)
-        return error_message
-    
-    try:
-        result = subprocess.run([python_path, filename], 
-                                check=True, 
-                                stdout=subprocess.PIPE, 
-                                stderr=subprocess.PIPE, 
-                                text=True)
-        logging.info(f"Script {filename} executed successfully")
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        error_message = f"Failed to run script {filename}: {e.stderr.strip()}"
-        logging.error(error_message)
-        return error_message
-```
-
-## backend/tools/file_tools.py
-
-```typescript
-
-```
-
-## backend/tools/image_tools.py
-
-```typescript
-import base64
-import os
-import requests
-import logging
-from pathlib import Path
-from typing import Union, List, Dict, Optional, Literal
-import mimetypes
-from openai import OpenAI
-from urllib.parse import urlparse
-from typing import Union, List, Dict, Optional, Literal
-
-client = OpenAI()
-
-def analyze_image(
-    image_source: Union[str, List[str]],
-    prompt: str = "What's in this image?",
-    detail: Literal["auto", "low", "high"] = "auto",
-    model: str = "gpt-4o",
-    max_tokens: int = 1000
-) -> Dict[str, Union[str, Dict[str, int]]]:
-    """
-    Analyze one or more images using OpenAI's Vision API.
-    """
-    analyzer = ImageAnalyzer()
-    return analyzer.analyze_image(image_source, prompt, detail, model, max_tokens)
-
-class ImageAnalyzer:
-    """
-    A class for analyzing images using OpenAI's Vision API.
-
-    This class provides methods to analyze both local and remote images using
-    OpenAI's GPT-4o model, capable of image analysis. It supports multiple image formats and can
-    handle both single and multiple image analysis.
-
-    Attributes:
-        supported_formats (set): Set of supported image file extensions
-        client (OpenAI): OpenAI client instance
-
-    Raises:
-        ValueError: If an invalid API key or unsupported image format is provided
-        FileNotFoundError: If a local image file cannot be found
-        requests.exceptions.RequestException: If there's an error downloading an image
-    """
-
-    def __init__(self, api_key: Optional[str] = None) -> None:
-        """
-        Initialize the ImageAnalyzer with OpenAI API credentials.
-
-        Args:
-            api_key (Optional[str]): OpenAI API key. If None, will use OPENAI_API_KEY
-                environment variable.
-
-        Raises:
-            ValueError: If neither api_key parameter nor OPENAI_API_KEY environment
-                variable is set
-        """
-        self.client = OpenAI(api_key=api_key)
-        self.supported_formats = {'.png', '.jpg', '.jpeg', '.webp'}
-
-    def _encode_image(self, image_path: str) -> str:
-        """
-        Encode a local image file to base64 string.
-
-        Args:
-            image_path (str): Path to the local image file
-
-        Returns:
-            str: Base64 encoded string of the image
-
-        Raises:
-            FileNotFoundError: If the image file doesn't exist
-            IOError: If there's an error reading the file
-        """
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
-
-    def _validate_image_format(self, file_path: str) -> bool:
-        """
-        Validate if the image format is supported.
-
-        Args:
-            file_path (str): Path to the image file or URL
-
-        Returns:
-            bool: True if the format is supported, False otherwise
-        """
-        extension = Path(file_path).suffix.lower()
-        return extension in self.supported_formats
-
-    def _download_image(self, url: str, temp_path: str = "temp_image") -> str:
-        """
-        Download an image from a URL and save it to a temporary file.
-
-        Args:
-            url (str): URL of the image to download
-            temp_path (str): Base path for the temporary file
-
-        Returns:
-            str: Path to the downloaded temporary file
-
-        Raises:
-            requests.exceptions.RequestException: If there's an error downloading the image
-            ValueError: If the image format is not supported
-        """
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        
-        content_type = response.headers.get('content-type')
-        extension = mimetypes.guess_extension(content_type) if content_type else Path(urlparse(url).path).suffix
-        
-        if not extension or extension.lower() not in self.supported_formats:
-            raise ValueError(f"Unsupported image format: {extension}")
-            
-        temp_file = f"{temp_path}{extension}"
-        with open(temp_file, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-                
-        return temp_file
-
-    def analyze_image(
-        self,
-        image_source: Union[str, List[str]],
-        prompt: str = "What's in this image?",
-        detail: Literal["auto", "low", "high"] = "auto",
-        model: str = "gpt-4o",
-        max_tokens: int = 300
-    ) -> Dict[str, Union[str, Dict[str, int]]]:
-        """
-        Analyze one or more images using OpenAI's Vision API.
-
-        This method can process both local image files and images from URLs. It supports
-        multiple image formats (PNG, JPG, JPEG, WebP) and can analyze multiple images
-        in a single request.
-
-        Args:
-            image_source (Union[str, List[str]]): Single image path/URL or list of
-                image paths/URLs to analyze. Supports both local files and HTTP(S) URLs.
-            prompt (str, optional): Question or instruction for the model about the
-                image(s). Defaults to "What's in this image?".
-            detail (Literal["auto", "low", "high"], optional): Level of detail for
-                analysis. Affects token usage and cost. Defaults to "auto".
-                - "auto": Let the API choose based on image size
-                - "low": Low resolution analysis (faster, cheaper)
-                - "high": High resolution analysis (more detailed, more expensive)
-            model (str, optional): OpenAI model to use for analysis.
-                Defaults to "gpt-4o".
-            max_tokens (int, optional): Maximum tokens for the response.
-                Defaults to 300.
-
-        Returns:
-            Dict[str, Union[str, Dict[str, int]]]: Dictionary containing:
-                - content (str): The model's analysis of the image(s)
-                - usage (Dict[str, int]): Token usage statistics
-                    - prompt_tokens (int): Tokens used in the prompt
-                    - completion_tokens (int): Tokens used in the completion
-                    - total_tokens (int): Total tokens used
-
-        Raises:
-            ValueError: If image format is unsupported or detail level is invalid
-            FileNotFoundError: If a local image file cannot be found
-            requests.exceptions.RequestException: If there's an error downloading an image
-            openai.OpenAIError: If there's an error with the OpenAI API request
-
-        Examples:
-            # Analyze a local image
-            analyzer = ImageAnalyzer()
-            result = analyzer.analyze_image("path/to/image.jpg")
-            print(result["content"])
-
-            # Analyze an image from URL
-            result = analyzer.analyze_image(
-                "https://example.com/image.jpg",
-                prompt="Describe the main objects in this image",
-                detail="high"
-            )
-
-            # Analyze multiple images
-            images = ["image1.jpg", "https://example.com/image2.jpg"]
-            result = analyzer.analyze_image(
-                image_source=images,
-                prompt="Compare these images"
-            )
-        """
-        if isinstance(image_source, str):
-            image_source = [image_source]
-            
-        content = [{"type": "text", "text": prompt}]
-        temp_files = []
-        
-        try:
-            for source in image_source:
-                is_url = urlparse(source).scheme in ('http', 'https')
-                
-                if is_url:
-                    temp_file = self._download_image(source)
-                    temp_files.append(temp_file)
-                    image_path = temp_file
-                else:
-                    if not os.path.exists(source):
-                        raise FileNotFoundError(f"Image file not found: {source}")
-                    if not self._validate_image_format(source):
-                        raise ValueError(f"Unsupported image format: {source}")
-                    image_path = source
-                
-                base64_image = self._encode_image(image_path)
-                content.append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}",
-                        "detail": detail
-                    }
-                })
-            
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": content}],
-                max_tokens=max_tokens
-            )
-            
-            return {
-                "content": response.choices[0].message.content,
-                "usage": {
-                    "prompt_tokens": response.usage.prompt_tokens,
-                    "completion_tokens": response.usage.completion_tokens,
-                    "total_tokens": response.usage.total_tokens
-                }
-            }
-            
-        finally:
-            for temp_file in temp_files:
-                try:
-                    os.remove(temp_file)
-                except:
-                    pass
-
-def generate_image(
-    prompt: str,
-    size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024",
-    quality: Literal["standard", "hd"] = "hd",
-    style: Literal["vivid", "natural"] = "vivid",
-    model: str = "dall-e-3",
-    n: int = 1,
-    response_format: Literal["url", "b64_json"] = "url"
-) -> dict:
-    """
-    Generate an image using DALL-E 3.
-    
-    Args:
-        prompt (str): Text description of the desired image(s). Max 4000 characters.
-        size (str): Image size - "1024x1024", "1792x1024", or "1024x1792". Defaults to "1024x1024".
-        quality (str): Image quality - "standard" or "hd". Defaults to "hd".
-        style (str): Image style - "vivid" or "natural". Defaults to "vivid".
-        model (str): Model to use. Defaults to "dall-e-3".
-        n (int): Number of images to generate. DALL-E 3 only supports n=1.
-        response_format (str): Format for generated images - "url" or "b64_json". Defaults to "url".
-    
-    Returns:
-        dict: Response from the OpenAI API containing image data
-        
-    Raises:
-        Exception: If the API call fails
-    """
-    try:
-        logging.info(f"Generating image with prompt: {prompt}")
-        response = client.images.generate(
-            model=model,
-            prompt=prompt,
-            n=n,
-            size=size,
-            quality=quality,
-            style=style,
-            response_format=response_format
-        )
-        logging.info("Image generated successfully")
-        return {
-            "url": response.data[0].url,
-            "revised_prompt": getattr(response.data[0], 'revised_prompt', None)
-        }
-    except Exception as e:
-        error_message = f"Error generating image: {str(e)}"
-        logging.error(error_message)
-        return {"error": error_message}
 ```
 

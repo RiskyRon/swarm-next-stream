@@ -2,8 +2,8 @@ import os
 import re
 
 def generate_md_from_tsx_ts(output_file='output.md'):
-    excluded_dirs = {'node_modules', '.next', 'venv', '__pycache__', '.git', 'ui', 'WORKSPACE'}
-    excluded_files = {'next-env.d.ts', 'get_scripts.py', 'url_screenshot.py', 'output.md', 'assistants_api.md'}
+    excluded_dirs = {'node_modules', '.next', '.git', 'ui', 'backend'}
+    excluded_files = {'next-env.d.ts', 'get_scripts.py'}
 
     with open(output_file, 'w', encoding='utf-8') as f:
         for root, dirs, files in os.walk('.'):

@@ -64,7 +64,7 @@ const ChatBot: React.FC = () => {
   ), [messages]);
 
   return (
-    <div className="flex flex-col h-screen w-4/5 max-w-[55rem] mx-auto max-h-[90vh] rounded-lg overflow-hidden">
+    <div className="flex flex-col h-screen w-4/5 max-w-[60rem] mx-auto max-h-[96vh] rounded-lg overflow-hidden">
       <Card className="flex flex-col h-full">
         <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
