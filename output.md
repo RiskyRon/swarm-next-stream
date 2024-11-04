@@ -824,3 +824,1242 @@ export type { Message };
 
 ```
 
+## backend/instructions.py
+
+```typescript
+triage_instructions="""
+You are a highly skilled AI assistant specializing in triage. As a member of an AI team, each with specialized skills and tools, your role is to understand user inquiries and connect them to the most appropriate team member.
+
+**Team Members:**
+
+1. **triage_agent (Yourself):**
+   - **Role:** Understands the user's question and determines the best course of action.
+   - **Responsibility:** Connects the user to other team members based on the nature of the inquiry.
+
+2. **code_agent:**
+   - **Expertise:** Code interpretation and execution, proficient in shell, bash, and Python.
+   - **Capabilities:** 
+     - **execute_code:** Executes Python code and returns the output.
+     - **read_file:** Reads files from a given path, including PDFs.
+     - **install_package:** Installs Python packages into the user's virtual environment.
+     - **run_python_script:** Runs Python scripts and provides the output.
+   - **Use Cases:** Data analysis, algorithm development, debugging, and more.
+
+3. **web_agent:**
+   - **Expertise:** Web-related tasks and information retrieval from reputable sources.
+   - **Capabilities:** 
+     - **tavily_search:** Searches the internet using the Tavily client for relevant information.
+     - **get_video_transcript:** Retrieves transcripts of YouTube videos.
+     - **get_all_urls:** Gathers a list of connected URLs from a specified URL.
+     - **get_website_text_content:** Extracts the content of a webpage.
+     - **handle_research_report:** Generates deep and detailed research reports asynchronously.
+   - **Use Cases:** Answering questions about current events, facts, general knowledge, web scraping, and research.
+
+4. **reasoning_agent:**
+   - **Expertise:** Advanced reasoning and problem-solving using OpenAI's latest and most advanced model, o1-preview.
+   - **Capabilities:**
+     - **reason_with_o1:** Utilizes OpenAI's new o1-preview model for complex reasoning tasks.
+   - **Use Cases:** Solving complex problems, providing detailed explanations, and handling tasks that require advanced cognitive abilities.
+
+5. **image_agent:**
+   - **Expertise:** Image analysis and processing using OpenAI's Vision API.
+   - **Capabilities:**
+     - **analyze_image:** Analyzes both local and remote images using OpenAI's GPT-4 Vision model.
+     - **generate_image:** Generates images using OpenAI's DALL-E 3 model.
+   - **Use Cases:** Describing image content, extracting text from images, identifying objects or scenes in images.
+
+6. **weather_agent:**
+   - **Expertise:** Weather information retrieval using weatherapi.com API.
+   - **Capabilities:**
+     - **get_current_weather:** Retrieves the current weather data for a specified location.
+   - **Use Cases:** Providing up-to-date weather information for any location.
+
+**Your Task:**
+- Assess the user's request.
+- Determine which team member is best suited to handle the request.
+- Connect the user to the appropriate team member to ensure efficient and accurate assistance.
+"""
+
+web_instructions="""
+You are the web_agent, a highly skilled AI assistant specializing in all web-related tasks. Utilize your tools to fulfill user requests effectively. Your capabilities include:
+
+- **Browsing the Web:** Access and navigate websites to gather information.
+- **Scraping URLs:** Extract URLs from web pages.
+- **Retrieving Connected URLs:** Find all URLs linked to a specific URL.
+- **Generating Research Reports:** Use the `handle_research_report` function to create comprehensive and detailed research reports asynchronously.
+
+**Available Tools:**
+- **tavily_search:** Search the internet using the Tavily client for relevant information.
+- **get_video_transcript:** Obtain transcripts of YouTube videos.
+- **get_all_urls:** Retrieve a list of connected URLs from a given URL.
+- **get_website_text_content:** Extract the textual content from a webpage.
+- **handle_research_report:** Generate in-depth research reports.
+
+**Your Role:**
+- Leverage your web expertise and tools to provide accurate and timely information.
+- Ensure all responses are based on reputable sources.
+- When a user requests information that requires web interaction, use the appropriate tools to gather and present the data effectively.
+
+**Note:**
+- Youtube url links should be embedded in the response, so that the frontend can render it as a video.
+"""
+
+code_instructions="""
+You are the code_agent, a highly skilled AI assistant specializing in executing and interpreting code. As part of an AI team, your role is to address user queries by executing code efficiently. You have access to a robust set of tools tailored for coding tasks.
+
+**Capabilities:**
+- **Bash Command Execution:** Execute bash commands and return the output.
+- **Python Code Execution:** Run Python code snippets and provide results.
+- **Package Installation:** Install necessary Python packages upon user confirmation.
+- **Script Execution:** Run complete Python scripts and return their outputs.
+
+**Available Tools:**
+- **execute_code:** Executes Python code and returns the output.
+- **read_file:** Reads files from a specified path, including PDFs.
+- **install_package:** Installs Python packages into the user's virtual environment. *Note: Always confirm with the user before installing any packages.*
+- **run_python_script:** Executes Python scripts and provides the resulting output.
+
+**Your Role:**
+- Analyze the user's coding-related request.
+- Determine the best approach to address the query using your available tools.
+- Execute code responsibly, ensuring that any package installations are approved by the user beforehand.
+- Provide clear explanations of the results to aid the user's understanding.
+- Assist with tasks such as data analysis, algorithm development, debugging, and more, leveraging your coding expertise.
+"""
+
+reasoning_instructions="""
+You are the reasoning_agent, a highly advanced AI assistant specializing in complex problem-solving and detailed reasoning. Your primary tool is the o1-preview model, which you use to tackle challenging questions and provide in-depth explanations.
+
+The o1 series of large language models are trained with reinforcement learning to perform complex reasoning. o1 models think before they answer, producing a long internal chain of thought before responding to the user.
+Learn about the capabilities and limitations of o1 models in our reasoning guide.
+
+**Available Tools:**
+- **reason_with_o1:** Access the o1-preview model to perform advanced reasoning tasks.
+
+**Your Role:**
+- Call the `reason_with_o1` function to generate well-reasoned responses.
+- Use the o1-preview model through the `reason_with_o1` function to generate well-reasoned responses.
+- Provide clear, detailed, and logically structured explanations or solutions.
+- Handle tasks that require advanced cognitive abilities, such as:
+  - Solving complex theoretical problems
+  - Analyzing abstract concepts
+  - Providing multi-step explanations for complicated processes
+  - Offering nuanced perspectives on complex issues
+"""
+
+image_instructions = """
+You are the image_agent, a highly skilled AI assistant specializing in image analysis and generation tasks using OpenAI's Vision API and DALL-E 3.
+As part of an AI team, your role is to analyze and interpret images effectively using the ImageAnalyzer class and generate new images using DALL-E 3.
+
+**Capabilities:**
+- Analyze both local images and images from URLs using Vision API
+- Generate high-quality images using DALL-E 3
+- Process multiple images simultaneously for analysis
+- Support for various image formats (PNG, JPG, JPEG, WebP)
+- Adjustable detail levels for analysis (low/high)
+- Token usage tracking
+
+**Available Tools:**
+- **analyze_image:** Analyzes one or more images using OpenAI's Vision API and returns detailed descriptions
+  - Can process both local files and URLs
+  - Supports multiple image formats
+  - Configurable detail level and response length
+
+- **generate_image:** Creates images using DALL-E 3
+  - Generates high-quality images from text descriptions
+  - Supports different sizes (1024x1024, 1792x1024, 1024x1792)
+  - Adjustable quality (standard/hd) and style (vivid/natural)
+  - Returns image URL and revised prompt
+
+**Your Role:**
+- Interpret user requests related to image analysis and generation
+- Choose appropriate detail levels and parameters based on task requirements
+- Provide clear, descriptive analysis of image content
+- Generate high-quality images based on user prompts
+- Handle both single and multiple image analysis requests
+- Manage error cases gracefully (unsupported formats, invalid URLs, etc.)
+"""
+
+weather_instructions = """
+You are the weather_agent, a specialized AI assistant designed to provide up-to-date weather information.
+
+**Capabilities:**
+- Fetch current weather data for any given location using the `get_current_weather` function.
+
+**Available Tools:**
+- **get_current_weather:** Retrieves the current weather data for a specified location.
+
+**Your Role:**
+- Interpret the user's request related to weather information.
+- Use the `get_current_weather` function to fetch the latest weather data.
+- Present the weather information in a clear and concise manner.
+- **When presenting the weather data, output the information as a code block with language 'weather' containing JSON data, so that the frontend can render it appropriately.**
+
+**Output Format:**
+- Use a code block with language 'weather' to enclose the JSON data, like so:
+weather
+{
+"location": "New York",
+"temperature_c": "25°C",
+"condition": "Sunny",
+"icon_url": "http://...",
+"humidity": "60%",
+"wind_kph": "10 kph",
+"last_updated": "2023-10-23 12:25"
+}
+
+"""
+```
+
+## backend/test.py
+
+```typescript
+import asyncio
+import websockets # type: ignore
+import json
+
+async def test_websocket():
+    uri = "ws://localhost:8000/ws"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            message = input("Enter your message (or 'quit' to exit): ")
+            if message.lower() == 'quit':
+                break
+            
+            await websocket.send(message)
+            print("Message sent. Waiting for response...")
+
+            while True:
+                response = await websocket.recv()
+                data = json.loads(response)
+                if data['type'] == 'agent_change':
+                    print(f"Agent changed to: {data['agent']}")
+                elif data['type'] == 'content':
+                    print(data['content'], end='', flush=True)
+                elif data['type'] == 'end':
+                    print(f"\nResponse ended. Final agent: {data['agent']}")
+                    break
+
+asyncio.get_event_loop().run_until_complete(test_websocket())
+```
+
+## backend/main.py
+
+```typescript
+# main.py
+import os
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect # type: ignore
+from pydantic import BaseModel
+from typing import List, Dict, Any, Callable, Optional
+import json
+import asyncio
+from swarm import Swarm, Agent # type: ignore
+import nest_asyncio # type: ignore
+
+# Apply nest_asyncio
+nest_asyncio.apply()
+
+from tools.__init__ import *
+from instructions import *
+
+app = FastAPI()
+
+client = Swarm()
+
+MODEL = "gpt-4o-mini"
+
+def transfer_back_to_triage():
+    """Call this function to transfer back to the triage_agent."""
+    return triage_agent
+
+def transfer_to_web_agent():
+   """Call this function to transfer to the web_agent."""
+   return web_agent
+
+def transfer_to_code_agent():
+   """Call this function to transfer to the execute_command_agent"""
+   return code_agent
+
+def transfer_to_reasoning_agent():
+    """Call this function to transfer to the reasoning_agent"""
+    return reasoning_agent
+
+def transfer_to_image_agent():
+    """Call this function to transfer to the image_agent"""
+    return image_agent
+
+def transfer_to_weather_agent():
+    """Transfer control to the weather agent"""
+    return weather_agent
+
+triage_agent = Agent(
+    name="Triage Agent",
+    instructions=triage_instructions,
+    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent],
+    model=MODEL,
+)
+
+web_agent = Agent(
+    name="Web Agent",
+    instructions=web_instructions,
+    functions=[
+        tavily_search, 
+        get_video_transcript, 
+        get_website_text_content, 
+        save_to_md, 
+        get_all_urls, 
+        generate_research_report
+    ],
+    model=MODEL,
+)
+
+code_agent = Agent(
+    name="Code Agent",
+    instructions=code_instructions,
+    functions=[execute_command, read_file, install_package, run_python_script, transfer_back_to_triage],
+    model=MODEL,
+)
+
+reasoning_agent = Agent(
+    name="Reasoning Agent",
+    instructions=reasoning_instructions,
+    functions=[reason_with_o1,transfer_back_to_triage],
+    model=MODEL,
+)
+
+image_agent = Agent(
+    name="Image Agent",
+    instructions=image_instructions,
+    functions=[analyze_image, generate_image, transfer_back_to_triage],
+    model=MODEL,
+)
+
+weather_agent = Agent(
+    name="Weather Agent",
+    instructions=weather_instructions,
+    functions=[get_current_weather, transfer_back_to_triage],
+    model=MODEL,
+)
+
+# Append functions to agents
+triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent])
+web_agent.functions.extend([transfer_back_to_triage])
+code_agent.functions.extend([transfer_back_to_triage])
+reasoning_agent.functions.extend([transfer_back_to_triage])
+image_agent.functions.extend([transfer_back_to_triage])
+weather_agent.functions.extend([transfer_back_to_triage])
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class ConversationRequest(BaseModel):
+    messages: List[Message]
+
+@app.post("/chat")
+async def chat(request: ConversationRequest):
+    messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+    agent = triage_agent
+    response = client.run(agent=agent, messages=messages)
+    return {"response": response.messages[-1]["content"], "agent": response.agent.name}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    agent = triage_agent
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            message = data['message']
+            history = data.get('history', [])
+
+            # Convert history to the format expected by the Swarm client
+            messages = [{"role": msg["role"], "content": msg["content"]} for msg in history]
+            messages.append({"role": "user", "content": message})
+
+            async def process_stream():
+                stream = client.run(agent=agent, messages=messages, stream=True, debug=True)
+                current_agent_name = None
+                for chunk in stream:
+                    if isinstance(chunk, dict):
+                        if 'sender' in chunk and chunk['sender'] != current_agent_name:
+                            current_agent_name = chunk['sender']
+                            await websocket.send_json({"type": "agent_change", "agent": current_agent_name})
+                        if 'content' in chunk and chunk['content'] is not None:
+                            await websocket.send_json({"type": "content", "content": chunk['content']})
+                    await asyncio.sleep(0)
+
+            # Create a new task for processing the stream
+            await asyncio.create_task(process_stream())
+
+            response = client.run(agent=agent, messages=messages)
+            agent = response.agent
+
+            await websocket.send_json({"type": "end", "agent": agent.name})
+
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
+
+if __name__ == "__main__":
+    import uvicorn # type: ignore
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+```
+
+## backend/tools/weather_tools.py
+
+```typescript
+import os
+import requests
+import logging
+from typing import Dict, Optional, Union
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class WeatherData:
+    location: str
+    temperature_c: float
+    temperature_f: float
+    condition: str
+    icon_url: str
+    humidity: int
+    wind_kph: float
+    wind_mph: float
+    last_updated: datetime
+
+class WeatherAPIError(Exception):
+    """Custom exception for Weather API errors"""
+    pass
+
+def get_current_weather(location: str) -> Union[WeatherData, Dict[str, str]]:
+    """
+    Get the current weather for a given location using weatherapi.com API.
+
+    Args:
+        location (str): The location for which to retrieve weather data.
+
+    Returns:
+        Union[WeatherData, Dict[str, str]]: WeatherData object containing weather information,
+        or dictionary with error message if request fails.
+
+    Raises:
+        WeatherAPIError: If there's an issue with the API key or request.
+    """
+    WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
+    
+    if not WEATHER_API_KEY:
+        logging.error("WEATHER_API_KEY environment variable not set")
+        raise WeatherAPIError("Weather API key not set")
+
+    # URL encode the location parameter
+    encoded_location = requests.utils.quote(location)
+    url = f"http://api.weatherapi.com/v1/current.json"
+    
+    params = {
+        "key": WEATHER_API_KEY,
+        "q": encoded_location,
+        "aqi": "no"
+    }
+
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            timeout=10  # Add timeout to prevent hanging
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        if "error" in data:
+            error_message = data["error"].get("message", "Unknown error")
+            logging.error(f"Error from weather API: {error_message}")
+            return {"error": error_message}
+        
+        # Parse the last_updated string into a datetime object
+        last_updated = datetime.strptime(
+            data['current']['last_updated'],
+            '%Y-%m-%d %H:%M'
+        )
+        
+        # Create WeatherData object
+        weather_data = WeatherData(
+            location=f"{data['location']['name']}, {data['location']['region']}, {data['location']['country']}",
+            temperature_c=float(data['current']['temp_c']),
+            temperature_f=float(data['current']['temp_f']),
+            condition=data['current']['condition']['text'],
+            icon_url=f"https:{data['current']['condition']['icon']}",  # Use HTTPS
+            humidity=int(data['current']['humidity']),
+            wind_kph=float(data['current']['wind_kph']),
+            wind_mph=float(data['current']['wind_mph']),
+            last_updated=last_updated
+        )
+        
+        return weather_data
+        
+    except requests.Timeout:
+        logging.error("Request timed out")
+        return {"error": "Request timed out"}
+    except requests.RequestException as e:
+        logging.error(f"Request error: {e}")
+        return {"error": str(e)}
+    except (KeyError, ValueError) as e:
+        logging.error(f"Data parsing error: {e}")
+        return {"error": "Error parsing weather data"}
+
+```
+
+## backend/tools/web_tools.py
+
+```typescript
+import trafilatura # type: ignore
+import os
+import logging
+from bs4 import BeautifulSoup # type: ignore
+from tavily import TavilyClient # type: ignore
+from urllib.parse import urljoin, urlparse
+from youtube_transcript_api import YouTubeTranscriptApi # type: ignore
+from gpt_researcher import GPTResearcher # type: ignore
+import asyncio
+import nest_asyncio  # type: ignore # Add this import
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
+
+tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+
+def tavily_search(query: str) -> str:
+    """
+    Perform a search using the Tavily API.
+
+    This function takes a search query and uses the Tavily client to perform a basic search.
+    It returns the search context limited to a maximum of 8000 tokens.
+
+    Args:
+        query (str): The search query string.
+
+    Returns:
+        str: The search result context or an error message if the search fails.
+    """
+    logging.info(f"Performing Tavily search with query: {query}")
+    try:
+        search_result = tavily_client.get_search_context(query, search_depth="basic", max_tokens=8000)
+        logging.info("Tavily search completed successfully")
+        return search_result
+    except Exception as e:
+        error_message = f"Error performing Tavily search: {str(e)}"
+        logging.error(error_message)
+        return error_message
+
+
+
+async def fetch_report(query):
+    """
+    Fetch a research report based on the provided query and report type.
+    """
+    researcher = GPTResearcher(query=query)
+    await researcher.conduct_research()
+    report = await researcher.write_report()
+    return report
+
+def run_async(coroutine):
+    """Helper function to run async functions in a sync context."""
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)
+
+def generate_research_report(query: str) -> str:
+    """
+    Synchronous function to generate a research report.
+    Uses the current event loop if one exists, or creates a new one if needed.
+    """
+    async def _async_research():
+        try:
+            researcher = GPTResearcher(query=query)
+            await researcher.conduct_research()
+            return await researcher.write_report()
+        except Exception as e:
+            logging.error(f"Error in _async_research: {str(e)}")
+            return f"Error conducting research: {str(e)}"
+
+    try:
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+        # Create a new task in the current loop
+        return loop.run_until_complete(_async_research())
+    except RuntimeError:
+        # If no event loop is running, create a new one
+        return asyncio.run(_async_research())
+    except Exception as e:
+        logging.error(f"Error in generate_research_report: {str(e)}")
+        return f"Error generating research report: {str(e)}"
+
+def get_video_transcript(video_id):
+    """
+    Retrieve the transcript of a YouTube video.
+
+    This function takes a YouTube video ID and attempts to fetch its transcript
+    using the YouTubeTranscriptApi.
+
+    Args:
+        video_id (str): The ID of the YouTube video.
+
+    Returns:
+        list or str: A list containing the transcript data if successful,
+                     or an error message string if the retrieval fails.
+    """
+    logging.info(f"Fetching transcript for video ID: {video_id}")
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        logging.info("Video transcript fetched successfully")
+        return transcript
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}"
+        logging.error(error_message)
+        return error_message
+    
+def get_website_text_content(url: str) -> str:
+    """
+    Fetches and extracts the main text content from a given URL.
+
+    Args:
+        url (str): The URL of the website to fetch content from.
+
+    Returns:
+        str: The extracted text content from the website.
+
+    Raises:
+        Any exceptions raised by trafilatura.fetch_url or trafilatura.extract.
+    """
+    logging.info(f"Fetching content from URL: {url}")
+    downloaded = trafilatura.fetch_url(url)
+    text = trafilatura.extract(downloaded)
+    logging.info("Website content extracted successfully")
+    return text
+
+def save_to_md(text: str, filename: str) -> None:
+    """
+    Saves the given text content to a markdown file.
+
+    Args:
+        text (str): The text content to be saved.
+        filename (str): The name of the file to save the content to.
+
+    Returns:
+        None
+
+    Raises:
+        IOError: If there's an issue writing to the file.
+    """
+    logging.info(f"Saving content to file: {filename}")
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(text)
+        logging.info(f"Content saved successfully to {filename}")
+    except IOError as e:
+        logging.error(f"Error saving content to file: {str(e)}")
+
+def get_all_urls(base_url):
+    """
+    Process a given URL to find all connected URLs within the same domain.
+
+    This function downloads the content of the base_url, extracts all links,
+    filters for links within the same domain and removes duplicates.
+
+    Args:
+        base_url (str): The URL to process.
+
+    Returns:
+        list: A list of unique URLs connected to the base_url within the same domain.
+
+    Raises:
+        Exception: If there's an error during URL processing.
+    """
+    logging.info(f"Processing URL: {base_url}")
+    connected_urls = []
+    try:
+        downloaded = trafilatura.fetch_url(base_url)
+        if downloaded is None:
+            logging.warning(f"Failed to download {base_url}")
+            return []
+
+        soup = BeautifulSoup(downloaded, 'lxml')
+        
+        for link in soup.find_all('a', href=True):
+            url = urljoin(base_url, link['href'])
+            if urlparse(url).netloc == urlparse(base_url).netloc:
+                connected_urls.append(url)
+
+        # Remove duplicates
+        connected_urls = list(set(connected_urls))
+
+    except Exception as e:
+        logging.error(f"Error processing URL: {str(e)}")
+
+    return connected_urls
+```
+
+## backend/tools/research_tools.py
+
+```typescript
+import asyncio
+import logging
+from gpt_researcher import GPTResearcher # type: ignore
+import asyncio
+import nest_asyncio  # type: ignore # Add this import
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
+async def fetch_report(query):
+    """
+    Fetch a research report based on the provided query and report type.
+    """
+    researcher = GPTResearcher(query=query)
+    await researcher.conduct_research()
+    report = await researcher.write_report()
+    return report
+
+def run_async(coroutine):
+    """Helper function to run async functions in a sync context."""
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)
+
+def generate_research_report(query: str) -> str:
+    """
+    Synchronous function to generate a research report.
+    Uses the current event loop if one exists, or creates a new one if needed.
+    """
+    async def _async_research():
+        try:
+            researcher = GPTResearcher(query=query)
+            await researcher.conduct_research()
+            return await researcher.write_report()
+        except Exception as e:
+            logging.error(f"Error in _async_research: {str(e)}")
+            return f"Error conducting research: {str(e)}"
+
+    try:
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+        # Create a new task in the current loop
+        return loop.run_until_complete(_async_research())
+    except RuntimeError:
+        # If no event loop is running, create a new one
+        return asyncio.run(_async_research())
+    except Exception as e:
+        logging.error(f"Error in generate_research_report: {str(e)}")
+        return f"Error generating research report: {str(e)}"
+```
+
+## backend/tools/reasoning_tools.py
+
+```typescript
+from openai import OpenAI
+from typing import List, Dict, Generator
+
+client = OpenAI()
+
+def reason_with_o1(
+    messages: List[Dict[str, str]], 
+) -> Generator[str, None, None]:
+    """
+    Stream chat completions from OpenAI API.
+    
+    Args:
+        messages: List of message dictionaries with 'role' and 'content' keys
+    
+    Yields:
+        Content chunks from the streaming response
+        
+    Example:
+        messages = [
+            {"role": "user", "content": "Hello!"}
+        ]
+        
+        for chunk in stream_chat_completion(messages):
+            print(chunk, end='', flush=True)
+    """
+    # Create new client if none provided
+    if client is None:
+        client = OpenAI()
+    
+    # Create streaming completion
+    completion = client.chat.completions.create(
+        model="o1-preview",
+        messages=messages,
+        stream=True,
+    )
+    
+    # Yield content from chunks
+    for chunk in completion:
+        if chunk.choices[0].delta.content is not None:
+            yield chunk.choices[0].delta.content
+```
+
+## backend/tools/__init__.py
+
+```typescript
+from .web_tools import tavily_search, get_video_transcript, get_website_text_content, get_all_urls, save_to_md
+from .code_tools import execute_command, read_file, install_package, run_python_script
+from .research_tools import fetch_report, run_async, generate_research_report
+from .reasoning_tools import reason_with_o1
+from .image_tools import analyze_image, generate_image
+from .weather_tools import get_current_weather
+
+```
+
+## backend/tools/code_tools.py
+
+```typescript
+import os
+import subprocess
+import logging
+import PyPDF2 # type: ignore
+
+def execute_command(command):
+    """
+    Execute a shell command and return its output.
+
+    This function runs a given shell command using subprocess and returns the command's
+    standard output. If the command fails, it returns the error message. This function has many uses. For example, performing CRUD operations, running a script, or executing a system command, using webget or curl to download a file, etc.
+
+    Args:
+        command (str): The shell command to execute.
+
+    Returns:
+        str: The command's standard output if successful, or an error message if the command fails.
+    """
+    logging.info(f"Executing command: {command}")
+    current_dir = os.getcwd()
+    workspace_dir = os.path.join(current_dir, 'WORKSPACE')
+    
+    try:
+        os.chdir(workspace_dir)
+        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        logging.info("Command executed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Command failed with error: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+    finally:
+        os.chdir(current_dir)
+
+def read_file(file_path):
+    """
+    Read the contents of various file types from the WORKSPACE directory.
+
+    Supported file types: md, txt, pdf, mdx, py, ts, tsx, js, jsx, css, scss, html, json, csv, xml
+    The function automatically looks for files in the WORKSPACE directory relative to the
+    current working directory.
+
+    Args:
+        file_path (str): The path to the file to be read, relative to WORKSPACE directory.
+
+    Returns:
+        str: The contents of the file.
+
+    Raises:
+        ValueError: If the file type is not supported.
+        IOError: If there's an issue reading the file.
+    """
+    logging.info(f"Reading file: {file_path}")
+    
+    # Get the current directory and construct the WORKSPACE path
+    current_dir = os.getcwd()
+    workspace_dir = os.path.join(current_dir, 'WORKSPACE')
+    
+    # Construct the full file path within WORKSPACE
+    full_file_path = os.path.join(workspace_dir, file_path)
+    
+    file_extension = os.path.splitext(full_file_path)[1].lower()
+    supported_extensions = ['.md', '.txt', '.pdf', '.mdx', '.py', '.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.html', '.json', '.csv', '.xml']
+    
+    if file_extension not in supported_extensions:
+        raise ValueError(f"Unsupported file type: {file_extension}")
+    
+    try:
+        if file_extension == '.pdf':
+            with open(full_file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                content = ""
+                for page in pdf_reader.pages:
+                    content += page.extract_text()
+        else:
+            with open(full_file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+        
+        logging.info(f"File {full_file_path} read successfully")
+        return content
+    
+    except IOError as e:
+        logging.error(f"Error reading file {full_file_path}: {str(e)}")
+        raise
+
+def install_package(package_name):
+    """
+    Install a Python package in the /venv virtual environment.
+
+    Args:
+        package_name (str): The name of the package to install.
+
+    Returns:
+        str: The output of the installation command or an error message.
+    """
+    logging.info(f"Installing package: {package_name}")
+    venv_path = "venv"
+    pip_path = f"{venv_path}/bin/pip"
+    
+    if not os.path.exists(pip_path):
+        error_message = f"Virtual environment not found at {venv_path}"
+        logging.error(error_message)
+        return error_message
+    
+    try:
+        result = subprocess.run([pip_path, "install", package_name], 
+                                check=True, 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)
+        logging.info(f"Package {package_name} installed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to install package {package_name}: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+
+def run_python_script(filename):
+    """
+    Run a Python script using the Python interpreter from the /venv virtual environment.
+
+    Args:
+        filename (str): The name of the Python script to run.
+
+    Returns:
+        str: The output of the script or an error message.
+    """
+    logging.info(f"Running Python script: {filename}")
+    venv_path = "/venv"
+    python_path = f"{venv_path}/bin/python"
+    
+    if not os.path.exists(python_path):
+        error_message = f"Virtual environment not found at {venv_path}"
+        logging.error(error_message)
+        return error_message
+    
+    try:
+        result = subprocess.run([python_path, filename], 
+                                check=True, 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)
+        logging.info(f"Script {filename} executed successfully")
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to run script {filename}: {e.stderr.strip()}"
+        logging.error(error_message)
+        return error_message
+```
+
+## backend/tools/file_tools.py
+
+```typescript
+
+```
+
+## backend/tools/image_tools.py
+
+```typescript
+import base64
+import os
+import requests
+import logging
+from pathlib import Path
+from typing import Union, List, Dict, Optional, Literal
+import mimetypes
+from openai import OpenAI
+from urllib.parse import urlparse
+from typing import Union, List, Dict, Optional, Literal
+
+client = OpenAI()
+
+def analyze_image(
+    image_source: Union[str, List[str]],
+    prompt: str = "What's in this image?",
+    detail: Literal["auto", "low", "high"] = "auto",
+    model: str = "gpt-4o",
+    max_tokens: int = 1000
+) -> Dict[str, Union[str, Dict[str, int]]]:
+    """
+    Analyze one or more images using OpenAI's Vision API.
+    """
+    analyzer = ImageAnalyzer()
+    return analyzer.analyze_image(image_source, prompt, detail, model, max_tokens)
+
+class ImageAnalyzer:
+    """
+    A class for analyzing images using OpenAI's Vision API.
+
+    This class provides methods to analyze both local and remote images using
+    OpenAI's GPT-4o model, capable of image analysis. It supports multiple image formats and can
+    handle both single and multiple image analysis.
+
+    Attributes:
+        supported_formats (set): Set of supported image file extensions
+        client (OpenAI): OpenAI client instance
+
+    Raises:
+        ValueError: If an invalid API key or unsupported image format is provided
+        FileNotFoundError: If a local image file cannot be found
+        requests.exceptions.RequestException: If there's an error downloading an image
+    """
+
+    def __init__(self, api_key: Optional[str] = None) -> None:
+        """
+        Initialize the ImageAnalyzer with OpenAI API credentials.
+
+        Args:
+            api_key (Optional[str]): OpenAI API key. If None, will use OPENAI_API_KEY
+                environment variable.
+
+        Raises:
+            ValueError: If neither api_key parameter nor OPENAI_API_KEY environment
+                variable is set
+        """
+        self.client = OpenAI(api_key=api_key)
+        self.supported_formats = {'.png', '.jpg', '.jpeg', '.webp'}
+
+    def _encode_image(self, image_path: str) -> str:
+        """
+        Encode a local image file to base64 string.
+
+        Args:
+            image_path (str): Path to the local image file
+
+        Returns:
+            str: Base64 encoded string of the image
+
+        Raises:
+            FileNotFoundError: If the image file doesn't exist
+            IOError: If there's an error reading the file
+        """
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+
+    def _validate_image_format(self, file_path: str) -> bool:
+        """
+        Validate if the image format is supported.
+
+        Args:
+            file_path (str): Path to the image file or URL
+
+        Returns:
+            bool: True if the format is supported, False otherwise
+        """
+        extension = Path(file_path).suffix.lower()
+        return extension in self.supported_formats
+
+    def _download_image(self, url: str, temp_path: str = "temp_image") -> str:
+        """
+        Download an image from a URL and save it to a temporary file.
+
+        Args:
+            url (str): URL of the image to download
+            temp_path (str): Base path for the temporary file
+
+        Returns:
+            str: Path to the downloaded temporary file
+
+        Raises:
+            requests.exceptions.RequestException: If there's an error downloading the image
+            ValueError: If the image format is not supported
+        """
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        content_type = response.headers.get('content-type')
+        extension = mimetypes.guess_extension(content_type) if content_type else Path(urlparse(url).path).suffix
+        
+        if not extension or extension.lower() not in self.supported_formats:
+            raise ValueError(f"Unsupported image format: {extension}")
+            
+        temp_file = f"{temp_path}{extension}"
+        with open(temp_file, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+                
+        return temp_file
+
+    def analyze_image(
+        self,
+        image_source: Union[str, List[str]],
+        prompt: str = "What's in this image?",
+        detail: Literal["auto", "low", "high"] = "auto",
+        model: str = "gpt-4o",
+        max_tokens: int = 300
+    ) -> Dict[str, Union[str, Dict[str, int]]]:
+        """
+        Analyze one or more images using OpenAI's Vision API.
+
+        This method can process both local image files and images from URLs. It supports
+        multiple image formats (PNG, JPG, JPEG, WebP) and can analyze multiple images
+        in a single request.
+
+        Args:
+            image_source (Union[str, List[str]]): Single image path/URL or list of
+                image paths/URLs to analyze. Supports both local files and HTTP(S) URLs.
+            prompt (str, optional): Question or instruction for the model about the
+                image(s). Defaults to "What's in this image?".
+            detail (Literal["auto", "low", "high"], optional): Level of detail for
+                analysis. Affects token usage and cost. Defaults to "auto".
+                - "auto": Let the API choose based on image size
+                - "low": Low resolution analysis (faster, cheaper)
+                - "high": High resolution analysis (more detailed, more expensive)
+            model (str, optional): OpenAI model to use for analysis.
+                Defaults to "gpt-4o".
+            max_tokens (int, optional): Maximum tokens for the response.
+                Defaults to 300.
+
+        Returns:
+            Dict[str, Union[str, Dict[str, int]]]: Dictionary containing:
+                - content (str): The model's analysis of the image(s)
+                - usage (Dict[str, int]): Token usage statistics
+                    - prompt_tokens (int): Tokens used in the prompt
+                    - completion_tokens (int): Tokens used in the completion
+                    - total_tokens (int): Total tokens used
+
+        Raises:
+            ValueError: If image format is unsupported or detail level is invalid
+            FileNotFoundError: If a local image file cannot be found
+            requests.exceptions.RequestException: If there's an error downloading an image
+            openai.OpenAIError: If there's an error with the OpenAI API request
+
+        Examples:
+            # Analyze a local image
+            analyzer = ImageAnalyzer()
+            result = analyzer.analyze_image("path/to/image.jpg")
+            print(result["content"])
+
+            # Analyze an image from URL
+            result = analyzer.analyze_image(
+                "https://example.com/image.jpg",
+                prompt="Describe the main objects in this image",
+                detail="high"
+            )
+
+            # Analyze multiple images
+            images = ["image1.jpg", "https://example.com/image2.jpg"]
+            result = analyzer.analyze_image(
+                image_source=images,
+                prompt="Compare these images"
+            )
+        """
+        if isinstance(image_source, str):
+            image_source = [image_source]
+            
+        content = [{"type": "text", "text": prompt}]
+        temp_files = []
+        
+        try:
+            for source in image_source:
+                is_url = urlparse(source).scheme in ('http', 'https')
+                
+                if is_url:
+                    temp_file = self._download_image(source)
+                    temp_files.append(temp_file)
+                    image_path = temp_file
+                else:
+                    if not os.path.exists(source):
+                        raise FileNotFoundError(f"Image file not found: {source}")
+                    if not self._validate_image_format(source):
+                        raise ValueError(f"Unsupported image format: {source}")
+                    image_path = source
+                
+                base64_image = self._encode_image(image_path)
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}",
+                        "detail": detail
+                    }
+                })
+            
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": content}],
+                max_tokens=max_tokens
+            )
+            
+            return {
+                "content": response.choices[0].message.content,
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+            }
+            
+        finally:
+            for temp_file in temp_files:
+                try:
+                    os.remove(temp_file)
+                except:
+                    pass
+
+def generate_image(
+    prompt: str,
+    size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024",
+    quality: Literal["standard", "hd"] = "hd",
+    style: Literal["vivid", "natural"] = "vivid",
+    model: str = "dall-e-3",
+    n: int = 1,
+    response_format: Literal["url", "b64_json"] = "url"
+) -> dict:
+    """
+    Generate an image using DALL-E 3.
+    
+    Args:
+        prompt (str): Text description of the desired image(s). Max 4000 characters.
+        size (str): Image size - "1024x1024", "1792x1024", or "1024x1792". Defaults to "1024x1024".
+        quality (str): Image quality - "standard" or "hd". Defaults to "hd".
+        style (str): Image style - "vivid" or "natural". Defaults to "vivid".
+        model (str): Model to use. Defaults to "dall-e-3".
+        n (int): Number of images to generate. DALL-E 3 only supports n=1.
+        response_format (str): Format for generated images - "url" or "b64_json". Defaults to "url".
+    
+    Returns:
+        dict: Response from the OpenAI API containing image data
+        
+    Raises:
+        Exception: If the API call fails
+    """
+    try:
+        logging.info(f"Generating image with prompt: {prompt}")
+        response = client.images.generate(
+            model=model,
+            prompt=prompt,
+            n=n,
+            size=size,
+            quality=quality,
+            style=style,
+            response_format=response_format
+        )
+        logging.info("Image generated successfully")
+        return {
+            "url": response.data[0].url,
+            "revised_prompt": getattr(response.data[0], 'revised_prompt', None)
+        }
+    except Exception as e:
+        error_message = f"Error generating image: {str(e)}"
+        logging.error(error_message)
+        return {"error": error_message}
+```
+

@@ -4,3 +4,4 @@ from .research_tools import fetch_report, run_async, generate_research_report
 from .reasoning_tools import reason_with_o1
 from .image_tools import analyze_image, generate_image
 from .weather_tools import get_current_weather
+from .make_tools import send_to_make

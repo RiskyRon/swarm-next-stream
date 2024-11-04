@@ -12,6 +12,7 @@ import nest_asyncio # type: ignore
 nest_asyncio.apply()
 
 from tools.__init__ import *
+
 from instructions import *
 
 app = FastAPI()
@@ -44,10 +45,18 @@ def transfer_to_weather_agent():
     """Transfer control to the weather agent"""
     return weather_agent
 
+def transfer_to_make_agent():
+    """Transfer control to the make agent"""
+    return make_agent
+
+def transfer_to_research_agent():
+    """Transfer control to the research agent"""
+    return research_agent
+
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent],
+    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent, transfer_to_research_agent],
     model=MODEL,
 )
 
@@ -93,13 +102,29 @@ weather_agent = Agent(
     model=MODEL,
 )
 
+research_agent = Agent(
+    name="Research Agent",
+    instructions=research_instructions,
+    functions=[fetch_report, run_async, generate_research_report, transfer_back_to_triage],
+    model=MODEL,
+)
+
+make_agent = Agent(
+    name="Make Agent",
+    instructions=make_instructions,
+    functions=[send_to_make, transfer_back_to_triage],
+    model=MODEL,
+)
+
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent])
+triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent, transfer_to_research_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
 image_agent.functions.extend([transfer_back_to_triage])
 weather_agent.functions.extend([transfer_back_to_triage])
+make_agent.functions.extend([transfer_back_to_triage])
+research_agent.functions.extend([transfer_back_to_triage])
 
 class Message(BaseModel):
     role: str
