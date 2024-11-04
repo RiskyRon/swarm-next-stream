@@ -56,7 +56,15 @@ def transfer_to_research_agent():
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent, transfer_to_research_agent],
+    functions=[
+        transfer_to_code_agent,
+        transfer_to_web_agent,
+        transfer_to_reasoning_agent,
+        transfer_to_image_agent,
+        transfer_to_weather_agent,
+        transfer_to_make_agent,
+        transfer_to_research_agent
+    ],
     model=MODEL,
 )
 
@@ -77,7 +85,13 @@ web_agent = Agent(
 code_agent = Agent(
     name="Code Agent",
     instructions=code_instructions,
-    functions=[execute_command, read_file, install_package, run_python_script, transfer_back_to_triage],
+    functions=[
+        execute_command,
+        read_file,
+        install_package,
+        run_python_script,
+        transfer_back_to_triage
+    ],
     model=MODEL,
 )
 
@@ -117,7 +131,9 @@ make_agent = Agent(
 )
 
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent, transfer_to_research_agent])
+triage_agent.functions.extend([transfer_to_code_agent,transfer_to_web_agent, transfer_to_reasoning_agent,
+                               transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent,
+                               transfer_to_research_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
