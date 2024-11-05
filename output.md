@@ -874,6 +874,20 @@ You are a highly skilled AI assistant specializing in triage. As a member of an 
      - **get_current_weather:** Retrieves the current weather data for a specified location.
    - **Use Cases:** Providing up-to-date weather information for any location.
 
+7. **make_agent:**
+  - **Expertise:** Make.com automation using webhooks.
+  - **Capabilities:**
+    - **send_to_make:** Sends data to a Make.com webhook and returns the response.
+  - **Use Cases:** Automating tasks on Make.com.
+
+8. **research_agent:**
+   - **Expertise:** Conducting in-depth research and generating comprehensive reports
+   - **Capabilities:**
+     - **fetch_report:** Fetches research reports asynchronously
+     - **generate_research_report:** Generates detailed research reports
+     - **run_async:** Runs async functions in sync context
+   - **Use Cases:** In-depth research, comprehensive reports, detailed analysis of topics
+
 **Your Task:**
 - Assess the user's request.
 - Determine which team member is best suited to handle the request.
@@ -1009,6 +1023,72 @@ weather
 }
 
 """
+
+research_instructions = """
+You are the research_agent, a specialized AI assistant designed to conduct in-depth research and generate comprehensive reports.
+
+**Capabilities:**
+- Generate detailed research reports on any topic
+- Conduct thorough research using GPT Researcher
+- Handle complex research queries
+
+**Available Tools:**
+- **fetch_report:** Fetches a research report asynchronously
+- **run_async:** Helper function to run async functions in sync context
+- **generate_research_report:** Generates a complete research report
+
+**Your Role:**
+- Understand user research requests
+- Generate comprehensive research reports
+- Present findings in a clear, structured format
+- Handle both simple and complex research queries effectively
+
+**Note:**
+Always ensure research is thorough and well-documented. When presenting research findings, maintain a clear structure with proper sections and citations where applicable.
+"""
+
+make_instructions = """
+You are the make_agent, a specialized AI assistant designed to interact with Make.com through webhooks and handle various response types including images.
+
+**Capabilities:**
+- Send messages to Make.com webhooks
+- Handle both text and image responses
+- Maintain conversation threads
+- Process various response formats
+
+**Available Tools:**
+- **send_to_make:** Sends a message to Make.com webhook and returns the response. The function can handle:
+  - get contents of a noticon page
+
+**Your Role:**
+- Accept user messages and send them to Make.com
+- Present responses appropriately based on their type
+- Maintain conversation context
+- Handle errors gracefully
+
+**Note:**
+Responses from Make.com may include image URLs, text content, or structured data. The response will be automatically formatted appropriately for display to the user.
+"""
+```
+
+## backend/maketest.py
+
+```typescript
+import requests
+
+def send_hello_world():
+    url = "https://hook.eu2.make.com/lh4bjyea77m4h8gkv3vqc7vvm0290vwu"
+    data = {"message": "Hello, World!"}
+    try:
+        response = requests.post(url, json=data)
+        response.raise_for_status()  # Check if the request was successful
+        print("Message sent successfully:", response.json())
+    except requests.exceptions.RequestException as e:
+        print("Failed to send message:", e)
+
+# Call the function
+send_hello_world()
+
 ```
 
 ## backend/test.py
@@ -1060,6 +1140,7 @@ import nest_asyncio # type: ignore
 nest_asyncio.apply()
 
 from tools.__init__ import *
+
 from instructions import *
 
 app = FastAPI()
@@ -1092,10 +1173,26 @@ def transfer_to_weather_agent():
     """Transfer control to the weather agent"""
     return weather_agent
 
+def transfer_to_make_agent():
+    """Transfer control to the make agent"""
+    return make_agent
+
+def transfer_to_research_agent():
+    """Transfer control to the research agent"""
+    return research_agent
+
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
-    functions=[transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent],
+    functions=[
+        transfer_to_code_agent,
+        transfer_to_web_agent,
+        transfer_to_reasoning_agent,
+        transfer_to_image_agent,
+        transfer_to_weather_agent,
+        transfer_to_make_agent,
+        transfer_to_research_agent
+    ],
     model=MODEL,
 )
 
@@ -1116,7 +1213,13 @@ web_agent = Agent(
 code_agent = Agent(
     name="Code Agent",
     instructions=code_instructions,
-    functions=[execute_command, read_file, install_package, run_python_script, transfer_back_to_triage],
+    functions=[
+        execute_command,
+        read_file,
+        install_package,
+        run_python_script,
+        transfer_back_to_triage
+    ],
     model=MODEL,
 )
 
@@ -1141,13 +1244,31 @@ weather_agent = Agent(
     model=MODEL,
 )
 
+research_agent = Agent(
+    name="Research Agent",
+    instructions=research_instructions,
+    functions=[fetch_report, run_async, generate_research_report, transfer_back_to_triage],
+    model=MODEL,
+)
+
+make_agent = Agent(
+    name="Make Agent",
+    instructions=make_instructions,
+    functions=[send_to_make, transfer_back_to_triage],
+    model=MODEL,
+)
+
 # Append functions to agents
-triage_agent.functions.extend([transfer_to_code_agent, transfer_to_web_agent, transfer_to_reasoning_agent, transfer_to_image_agent, transfer_to_weather_agent])
+triage_agent.functions.extend([transfer_to_code_agent,transfer_to_web_agent, transfer_to_reasoning_agent,
+                               transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent,
+                               transfer_to_research_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
 image_agent.functions.extend([transfer_back_to_triage])
 weather_agent.functions.extend([transfer_back_to_triage])
+make_agent.functions.extend([transfer_back_to_triage])
+research_agent.functions.extend([transfer_back_to_triage])
 
 class Message(BaseModel):
     role: str
@@ -1613,7 +1734,7 @@ from .research_tools import fetch_report, run_async, generate_research_report
 from .reasoning_tools import reason_with_o1
 from .image_tools import analyze_image, generate_image
 from .weather_tools import get_current_weather
-
+from .make_tools import send_to_make
 ```
 
 ## backend/tools/code_tools.py
@@ -2061,5 +2182,155 @@ def generate_image(
         error_message = f"Error generating image: {str(e)}"
         logging.error(error_message)
         return {"error": error_message}
+```
+
+## backend/tools/make_tools.py
+
+```typescript
+# backend/tools/make_tools.py
+
+import requests
+import logging
+from typing import Dict, Optional, Any, Union
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class MakeResponse:
+    success: bool
+    content: Union[str, Dict[str, Any]]
+    status_code: int
+    thread_id: Optional[str] = None
+    error: Optional[str] = None
+
+class MakeWebhookHandler:
+    def __init__(self):
+        self.webhook_url = "https://hook.eu2.make.com/lh4bjyea77m4h8gkv3vqc7vvm0290vwu"
+        self.thread_id_store: Dict[str, str] = {}
+        self.logger = logging.getLogger(__name__)
+
+    def send_message(self, message: str) -> MakeResponse:
+        """
+        Send a message to Make.com webhook and handle various response types.
+        
+        Args:
+            message (str): Message to send to Make.com
+            
+        Returns:
+            MakeResponse: Structured response containing status and content
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/plain, image/*'
+        }
+
+        thread_id = self.thread_id_store.get("latest_thread_id")
+        if thread_id:
+            headers['thread_id'] = thread_id
+
+        data = {"message": message}
+        
+        try:
+            self.logger.debug(f"Sending request to webhook: {data}")
+            
+            response = requests.post(
+                self.webhook_url,
+                json=data,
+                headers=headers,
+                timeout=30
+            )
+            
+            # Log response details
+            self.logger.debug(f"Response status: {response.status_code}")
+            self.logger.debug(f"Response headers: {response.headers}")
+            
+            # Check if response is an image URL
+            content_type = response.headers.get('Content-Type', '')
+            if 'image' in content_type or response.text.startswith('http') and any(ext in response.text.lower() for ext in ['.png', '.jpg', '.jpeg', '.gif']):
+                return MakeResponse(
+                    success=True,
+                    content={"type": "image", "url": response.text.strip()},
+                    status_code=response.status_code,
+                    thread_id=response.headers.get('thread_id')
+                )
+            
+            # Try to parse as JSON
+            try:
+                response_data = response.json()
+                thread_id = response_data.get('thread_id')
+                if thread_id:
+                    self.thread_id_store["latest_thread_id"] = thread_id
+                
+                return MakeResponse(
+                    success=True,
+                    content=response_data,
+                    status_code=response.status_code,
+                    thread_id=thread_id
+                )
+            except ValueError:
+                # If not JSON, return text response
+                return MakeResponse(
+                    success=True,
+                    content={"type": "text", "content": response.text},
+                    status_code=response.status_code,
+                    thread_id=response.headers.get('thread_id')
+                )
+            
+        except requests.Timeout:
+            error_msg = "Request to webhook timed out"
+            self.logger.error(error_msg)
+            return MakeResponse(
+                success=False,
+                content={},
+                status_code=504,
+                error=error_msg
+            )
+            
+        except requests.RequestException as e:
+            error_msg = f"Failed to communicate with webhook: {str(e)}"
+            self.logger.error(error_msg)
+            return MakeResponse(
+                success=False,
+                content={},
+                status_code=500,
+                error=error_msg
+            )
+            
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            self.logger.error(error_msg)
+            return MakeResponse(
+                success=False,
+                content={},
+                status_code=500,
+                error=error_msg
+            )
+
+# Create singleton instance
+make_handler = MakeWebhookHandler()
+
+def send_to_make(message: str) -> str:
+    """
+    Function to be used by the Make agent to send messages.
+    
+    Args:
+        message (str): Message to send to Make.com
+        
+    Returns:
+        str: Formatted response message
+    """
+    result = make_handler.send_message(message)
+    
+    if result.success:
+        if isinstance(result.content, dict):
+            if result.content.get("type") == "image":
+                return f"![Generated Image]({result.content['url']})"
+            elif result.content.get("type") == "text":
+                return result.content['content']
+            else:
+                return str(result.content)
+        return str(result.content)
+    else:
+        return f"Error: {result.error}"
 ```
 

@@ -5,3 +5,4 @@ from .reasoning_tools import reason_with_o1
 from .image_tools import analyze_image, generate_image
 from .weather_tools import get_current_weather
 from .make_tools import send_to_make
+from .notion_tools import NotionHandler, create_notion_page, update_notion_page, get_notion_page_content, search_notion

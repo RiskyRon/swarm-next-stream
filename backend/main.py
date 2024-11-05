@@ -53,6 +53,10 @@ def transfer_to_research_agent():
     """Transfer control to the research agent"""
     return research_agent
 
+def transfer_to_notion_agent():
+    """Transfer control to the notion agent"""
+    return notion_agent
+
 triage_agent = Agent(
     name="Triage Agent",
     instructions=triage_instructions,
@@ -63,7 +67,8 @@ triage_agent = Agent(
         transfer_to_image_agent,
         transfer_to_weather_agent,
         transfer_to_make_agent,
-        transfer_to_research_agent
+        transfer_to_research_agent,
+        transfer_to_notion_agent
     ],
     model=MODEL,
 )
@@ -130,10 +135,23 @@ make_agent = Agent(
     model=MODEL,
 )
 
+notion_agent = Agent(
+    name="Notion Agent",
+    instructions=notion_instructions,
+    functions=[
+        search_notion,
+        create_notion_page,
+        get_notion_page_content,
+        update_notion_page,
+        transfer_back_to_triage
+    ],
+    model=MODEL,
+)
+
 # Append functions to agents
 triage_agent.functions.extend([transfer_to_code_agent,transfer_to_web_agent, transfer_to_reasoning_agent,
                                transfer_to_image_agent, transfer_to_weather_agent, transfer_to_make_agent,
-                               transfer_to_research_agent])
+                               transfer_to_research_agent, transfer_to_notion_agent])
 web_agent.functions.extend([transfer_back_to_triage])
 code_agent.functions.extend([transfer_back_to_triage])
 reasoning_agent.functions.extend([transfer_back_to_triage])
@@ -141,6 +159,7 @@ image_agent.functions.extend([transfer_back_to_triage])
 weather_agent.functions.extend([transfer_back_to_triage])
 make_agent.functions.extend([transfer_back_to_triage])
 research_agent.functions.extend([transfer_back_to_triage])
+notion_agent.functions.extend([transfer_back_to_triage])
 
 class Message(BaseModel):
     role: str
